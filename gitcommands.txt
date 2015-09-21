@@ -10,7 +10,7 @@ Faze-lo no site ou :: git remote add origin https://github.com/<login>/<repname>
 
 SETUP::::: ---> git simple guide: http://rogerdudler.github.io/git-guide/
 cd Desktop
-git clone https://github.com/<username>/<rep name>
+git clone https://github.com/<rep creator name>/<rep name>
 cd <rep name>
 git init  ::: associa dir a repositorio
 

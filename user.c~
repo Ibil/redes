@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 char udp_hostname[] = "localhost";
-#define DEFAULT_PORT 58018
+#define DEFAULT_PORT 58011
 
 char ECSname[50];
 int ECSport;

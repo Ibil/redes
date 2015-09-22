@@ -32,10 +32,7 @@ int udp_open_socket(int fd){
 	serveraddr.sin_addr.s_addr=htonl(INADDR_ANY);
 	serveraddr.sin_port=htons((int)ECSport);
 	
-	if (bind(fd,(struct sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
-		printf("Erro no bind : \n");
-		exit(1);
-	}
+	bind(fd, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
 	return fd;
 }
 

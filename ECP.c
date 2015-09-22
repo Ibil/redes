@@ -77,6 +77,7 @@ void copia_Tnames(){
 	
 		printf("Tnn : %d \t TES_ip : %s\t TES_Port : %s\n", t_number, TES_ip, TES_port);
 	}
+	t_number--; /* conforme ordem do ciclo*/
 	if(t_number < 10){
 		udp_buffer[4] =  t_number + '0';
 		indice_buffer = 5;
@@ -87,10 +88,13 @@ void copia_Tnames(){
 		indice_buffer = 6;
 	}
 	
+	fseek(fp_txt, 0,SEEK_SET);
 	/* vai passar as linhas para o buffer uma a uma*/
 	for(t_number = 1;
 		1 < fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
 		t_number++){
+		
+		printf("Tnn : %d \t TES_ip : %s\t TES_Port : %s\n", t_number, TES_ip, TES_port);
 		
 		name_size = strlen(TES_name);
 		ip_size = strlen(TES_ip);
@@ -126,13 +130,12 @@ void copia_Tnames(){
 	}
 	udp_buffer[indice_buffer] = '\n';
 	udp_buffer[indice_buffer+1] = '\0';
-	
+	printf("O buffer vai enviar : %s\n", udp_buffer);
 	fclose(fp_txt);
 	
 }
 
 void udp_trata_mensagem(){
-	printf("recebi\n");
 	if(!strcmp(udp_buffer,"TQR\n")){
 		strcpy(udp_buffer,"AWT ");
 		copia_Tnames();

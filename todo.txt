@@ -1,0 +1,2 @@
+verificar pedido de amostragem de prints no enunciado
+completar makefile com paths

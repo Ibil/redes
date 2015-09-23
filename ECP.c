@@ -19,7 +19,7 @@ int fd;
 struct sockaddr_in serveraddr, clientaddr;
 int addrlen;
 
-char udp_buffer[100];
+char* udp_buffer;
 
 extern int errno;
 
@@ -73,11 +73,10 @@ void copia_Tnames(){
 	/* ve quantos topicos ha */
 	for(t_number = 1;
 		1 < fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
-		t_number++){
+		t_number++);
+		
+	t_number--; /* pois o for incrementa antes de sair*/
 	
-		printf("Tnn : %d \t TES_ip : %s\t TES_Port : %s\n", t_number, TES_ip, TES_port);
-	}
-	t_number--; /* conforme ordem do ciclo*/
 	if(t_number < 10){
 		udp_buffer[4] =  t_number + '0';
 		indice_buffer = 5;
@@ -93,8 +92,6 @@ void copia_Tnames(){
 	for(t_number = 1;
 		1 < fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
 		t_number++){
-		
-		printf("Tnn : %d \t TES_ip : %s\t TES_Port : %s\n", t_number, TES_ip, TES_port);
 		
 		name_size = strlen(TES_name);
 		ip_size = strlen(TES_ip);
@@ -115,7 +112,7 @@ void copia_Tnames(){
 		for( i = 0; i < ip_size; i++){
 			udp_buffer[indice_buffer+i]= TES_ip[i];
 		}
-		indice_buffer += name_size;
+		indice_buffer += ip_size;
 		
 		/* por a porta*/
 		udp_buffer[indice_buffer]= ' ';
@@ -124,21 +121,51 @@ void copia_Tnames(){
 		for( i = 0; i < port_size; i++){
 			udp_buffer[indice_buffer+i]= TES_port[i];
 		}
-		indice_buffer += name_size;
-		
-		printf("Tnn : %d \t TES_ip : %s\t TES_Port : %s\n", t_number, TES_ip, TES_port);
+		indice_buffer += port_size;
 	}
 	udp_buffer[indice_buffer] = '\n';
 	udp_buffer[indice_buffer+1] = '\0';
-	printf("O buffer vai enviar : %s\n", udp_buffer);
 	fclose(fp_txt);
 	
 }
+
+void copia_TES(){
+	int topic_index;
+	int buffer_index;
+	
+	FILE *fp_txt;
+	
+	/*
+	input: "TER dd\n"
+	outpu: "AWTES ip port\n\0"
+	*/
+	if(udp_buffer[5] == ' '){
+		topic_index = udp_buffer[4];
+	}
+	else{
+		topic_index = udp_buffer[4]*10 + udp_buffer[5];
+	}
+	strcpy(udp_buffer, "AWTES ");
+	buffer_index = 6;
+	
+	fp_txt = fopen("topics.txt", "r+");
+	
+	/*copiar e alterar o codigo para buscar o ip e port do topic_index*/
+	
+	fclose(fp_txt);
+	
+	
+	return;
+}
+
 
 void udp_trata_mensagem(){
 	if(!strcmp(udp_buffer,"TQR\n")){
 		strcpy(udp_buffer,"AWT ");
 		copia_Tnames();
+	}
+	if(!strcmp(udp_buffer,"TER")){
+		copia_TES();
 	}
 	else{
 		printf("ERR: Pedido invalido\n");
@@ -157,8 +184,9 @@ int main(int argc, char **argv){
 	}
 	
 	while(1){
+		udp_buffer = (char*)malloc(250*sizeof(char));
+		
 		fd = udp_open_socket(fd);
-		printf("abri\n");
 		addrlen = sizeof(clientaddr);
 	
 		udp_receive(250);
@@ -166,6 +194,8 @@ int main(int argc, char **argv){
 		udp_send(strlen(udp_buffer));
 	
 		udp_close(fd);
+		
+		free(udp_buffer);
 	}
 	return 0;
 }

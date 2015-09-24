@@ -106,6 +106,29 @@ if(n_files<10){
  
  ######## fim do check_file_list ########
  
+ ####### fork ########
+ 
+int ppid = fork();
+if (ppid < 0){
+	printf("Erro a fazer o fork para SSs\n");
+	exit(1);
+	}
+else if (ppid == 0){
+	//filho
+	recplicate_to_ss(file_name, s_size_of_data, p_data);
+	update_file_list(file_name);
+	exit(0);
+}
+else{
+	//pai
+	/* continua o que tem de fazer*/
+}
+ 
+ ########## fim fork ###########
+ 
+ 
+ 
+ 
  
  
  

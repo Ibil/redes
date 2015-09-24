@@ -47,7 +47,7 @@ void udp_receive(int nbytestoreceive){
 }
 
 void udp_send(int nbytestosend){
-	printf("VOu enviar resposta:\n");
+	printf("VOu enviar resposta: %s\n", udp_buffer);
 	sendto(fd,udp_buffer, nbytestosend*sizeof(char), 0, (struct sockaddr*)&clientaddr, addrlen);
 	printf("Resposta enviada \n");
 	return;
@@ -66,7 +66,7 @@ void copia_Tnames(){
 	char TES_ip[15];
 	char TES_port[6];
 	int indice_buffer;
-	int name_size, ip_size, port_size;
+	int name_size;
 	int i;
 	
 	fp_txt = fopen("topics.txt", "r+");
@@ -176,7 +176,12 @@ void udp_trata_mensagem(){
 		strcpy(udp_buffer,"AWT ");
 		copia_Tnames();
 	}
-	if(!strcmp(udp_buffer,"TER")){
+	if( udp_buffer[0] == 'T' &&
+		udp_buffer[1] == 'E' &&
+		udp_buffer[2] == 'R' &&
+		udp_buffer[3] == ' ')
+	{
+		printf("Mensagem entrou no ter\n");
 		copia_TES();
 	}
 	return;

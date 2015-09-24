@@ -1,4 +1,4 @@
-user tem de limpar o vector a cada ciclo para nao deixar la lixo
+imprimir o list como deve ser no terminal do user.
 
 
 verificar pedido de amostragem de prints no enunciado

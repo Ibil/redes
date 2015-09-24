@@ -134,6 +134,8 @@ void udp_request(char* input){
 
 	printf("Recebi mensagem AWTES: %s\n", buffer_tn);
 	
+	printf("falta guardar ip e porta em variavel global\n");
+	
 	free (buffer_tn);
 	udp_close(fd);
 	

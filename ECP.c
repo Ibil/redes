@@ -94,8 +94,6 @@ void copia_Tnames(){
 		t_number++){
 		
 		name_size = strlen(TES_name);
-		ip_size = strlen(TES_ip);
-		port_size = strlen(TES_port);
 		
 		/* poe o nome*/
 		udp_buffer[indice_buffer]= ' ';
@@ -104,24 +102,6 @@ void copia_Tnames(){
 			udp_buffer[indice_buffer+i]= TES_name[i];
 		}
 		indice_buffer += name_size;
-		
-		/* por o ip*/
-		udp_buffer[indice_buffer]= ' ';
-		indice_buffer++;
-		
-		for( i = 0; i < ip_size; i++){
-			udp_buffer[indice_buffer+i]= TES_ip[i];
-		}
-		indice_buffer += ip_size;
-		
-		/* por a porta*/
-		udp_buffer[indice_buffer]= ' ';
-		indice_buffer++;
-		
-		for( i = 0; i < port_size; i++){
-			udp_buffer[indice_buffer+i]= TES_port[i];
-		}
-		indice_buffer += port_size;
 	}
 	udp_buffer[indice_buffer] = '\n';
 	udp_buffer[indice_buffer+1] = '\0';
@@ -204,6 +184,7 @@ void udp_trata_mensagem(){
 
 
 int main(int argc, char **argv){
+	int i;
 	switch(argc){
 		case 1 : ECSport = DEFAULT_PORT;
 			     break;
@@ -214,6 +195,9 @@ int main(int argc, char **argv){
 	
 	while(1){
 		udp_buffer = (char*)malloc(250*sizeof(char));
+		for(i= 0; i<250;i++){
+			udp_buffer[i] = '\0';
+		}
 		
 		fd = udp_open_socket(fd);
 		addrlen = sizeof(clientaddr);

@@ -26,7 +26,8 @@ int addrlen;
 extern int errno;
 /* 192.168.128.1 */
 
-char buffer_tn[2580];
+char *buffer_tn;
+#define MAXBUFFSIZE 2580
 
 
 int udp_open(int fd){
@@ -42,9 +43,9 @@ int udp_open(int fd){
 	return fd;
 }
 
-void udp_send(int nbytestosend){
+void udp_send(int nbytestosend, char* mensagem){
 	printf("VOu enviar a mensagem: \n");
-	sendto(fd,buffer_tn, nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
+	sendto(fd,mensagem, nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
 	printf("Mensagem enviada\n");
 	return;
 }
@@ -63,15 +64,17 @@ void udp_close(int fd){
 
 int udp_list(){
 
-	int nt_max;
+	int i;
 	
-	strcpy(buffer_tn, "TQR\n");
-	printf(" O buffer_tn com %d size tem : %s", strlen(buffer_tn),buffer_tn);
-
 	fd = udp_open(fd);
 	addrlen = sizeof(serveraddr);
-	udp_send(4);
-	udp_receive(2581);	
+	udp_send(4, "TQR\n\0");
+	
+	buffer_tn = (char*)malloc(MAXBUFFSIZE*sizeof(char));
+	for(i = 0; i< MAXBUFFSIZE; i++){
+		buffer_tn[i] = '\0';
+	}
+	udp_receive(MAXBUFFSIZE + 1);	
 
 	udp_close(fd);
 	
@@ -89,6 +92,7 @@ int udp_list(){
 	
 	/*usar string token*/
 	
+	free (buffer_tn);
 	return 0;
 }
 

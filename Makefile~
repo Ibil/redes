@@ -1,0 +1,5 @@
+
+all: 
+	gcc -o userf/user user/user.c
+	gcc -o ECPf/ECP ECP/ECP.c
+	gcc -o TESf/TES TES/TES.c

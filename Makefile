@@ -1,5 +1,5 @@
 
 all: 
-	gcc -o user Client/client.c
-	gcc -o CS Server/CS.c
-	gcc -o SS storage/SS.c
+	gcc -o userf/user userf/user.c
+	gcc -o ECPf/ECP ECPf/ECP.c
+	gcc -o TESf/TES TESf/TES.c

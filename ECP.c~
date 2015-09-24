@@ -135,10 +135,16 @@ void copia_TES(){
 	
 	FILE *fp_txt;
 	
+	char TES_name[25];
+	char TES_ip[15];
+	char TES_port[6];
+	
 	/*
-	input: "TER dd\n"
+	input: "TER Tn\n\0"
 	outpu: "AWTES ip port\n\0"
 	*/
+	
+	/* Guardo o Topic_number*/
 	if(udp_buffer[5] == ' '){
 		topic_index = udp_buffer[4];
 	}
@@ -150,11 +156,33 @@ void copia_TES(){
 	
 	fp_txt = fopen("topics.txt", "r+");
 	
-	/*copiar e alterar o codigo para buscar o ip e port do topic_index*/
+
+	/*Procura o topic_index*/	
+	for(t_number = 1; t_number <= topic_index; t_number++){
+		fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
+	}
 	
+	/* por o ip*/
+	for( i = 0; i < ip_size; i++){
+		udp_buffer[buffer_index+i]= TES_ip[i];
+	}
+	buffer_index += ip_size;
+	
+	/* por a porta*/
+	udp_buffer[buffer_index]= ' ';
+	buffer_index++;
+	
+	for( i = 0; i < port_size; i++){
+		udp_buffer[buffer_index+i]= TES_port[i];
+	}
+	buffer_index += port_size;
+
+	/* poe \n e \0 para funcionar bem*/
+	udp_buffer[buffer_index] = '\n';
+	udp_buffer[buffer_index+1] = '\0';
+	
+	printf("O udp_buffer com %d size, awtes : %s", strlen(udp_buffer),udp_buffer);
 	fclose(fp_txt);
-	
-	
 	return;
 }
 

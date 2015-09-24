@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 char udp_hostname[] = "localhost";
-#define DEFAULT_PORT 58011
+#define DEFAULT_PORT 58018
 
 char ECSname[50];
 int ECSport;
@@ -44,7 +44,7 @@ int udp_open(int fd){
 
 void udp_send(int nbytestosend){
 	printf("VOu enviar a mensagem: \n");
-	sendto(fd,"TQR\n", nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
+	sendto(fd,buffer_tn, nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
 	printf("Mensagem enviada\n");
 	return;
 }
@@ -64,15 +64,18 @@ void udp_close(int fd){
 int udp_list(){
 
 	int nt_max;
+	
+	strcpy(buffer_tn, "TQR\n");
+	printf(" O buffer_tn com %d size tem : %s", strlen(buffer_tn),buffer_tn);
 
 	fd = udp_open(fd);
 	addrlen = sizeof(serveraddr);
-	udp_send(4);
+	udp_send(4, msglist);
 	udp_receive(2581);	
 
 	udp_close(fd);
 	
-	printf("%s", buffer_tn);
+	printf("%s", buffer_tn); /* o /n ja vem dentro do buffer*/
 	
 	/* falta detectar erros*/
 	/*

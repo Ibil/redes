@@ -167,9 +167,6 @@ void udp_trata_mensagem(){
 	if(!strcmp(udp_buffer,"TER")){
 		copia_TES();
 	}
-	else{
-		printf("ERR: Pedido invalido\n");
-	}
 	return;
 }
 

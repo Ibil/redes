@@ -44,7 +44,7 @@ int udp_open(int fd){
 
 void udp_send(int nbytestosend){
 	printf("VOu enviar a mensagem: \n");
-	sendto(fd,"TQR\n", nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
+	sendto(fd,buffer_tn, nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
 	printf("Mensagem enviada\n");
 	return;
 }
@@ -64,6 +64,9 @@ void udp_close(int fd){
 int udp_list(){
 
 	int nt_max;
+	
+	strcpy(buffer_tn, "TQR\n");
+	printf(" O buffer_tn com %d size tem : %s", strlen(buffer_tn),buffer_tn);
 
 	fd = udp_open(fd);
 	addrlen = sizeof(serveraddr);
@@ -72,7 +75,7 @@ int udp_list(){
 
 	udp_close(fd);
 	
-	printf("%s", buffer_tn);
+	printf("%s", buffer_tn); /* o /n ja vem dentro do buffer*/
 	
 	/* falta detectar erros*/
 	/*

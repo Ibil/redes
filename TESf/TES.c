@@ -24,6 +24,28 @@ char* tcp_input_buffer;
 
 extern int errno;
 
+static int QID_indez = 0;
+
+/* EStrutura do TES com resultados*/
+
+typedef struct{
+	int SID;
+	int QID;
+	int Score;
+}quest_form;
+
+quest_form db_quest_form[1000];
+
+void cria_instancia_QID(int sid){
+	db_quest_form[QID_index].SID = sid;
+	db_quest_form[QID_index].SID = sid;
+	db_quest_form[QID_index].SID = sid;
+	QID_index++;
+}
+
+/* fim de estrutura*/
+
+
 /* ################   FUncoes UDP ################*/
 
 int udp_open_socket(int fd){
@@ -91,7 +113,7 @@ void tcp_connect(){
 	return;
 }
 
-void tcp_read(char* buffer){
+void tcp_read(char* buffer, int nbytestoread){
 	printf("Vou ler a mensagem\n");
 	ptr=buffer;
 	do{
@@ -108,9 +130,9 @@ void tcp_read(char* buffer){
 	return;
 }
 
-void tcp_write(int nbytestowrite){
-	printf("vou enviar a resposta: %s\n", msg);
-	ptr =strcpy(buffer,msg);
+void tcp_write(char* buffer, int nbytestowrite){
+	printf("vou enviar a resposta: %s\n", buffer);
+	ptr = buffer;
 	nleft = nbytestowrite;
 	while(nleft > 0){
 		if( (nwritten=write(newfd,ptr,nleft)) == -1){
@@ -245,19 +267,39 @@ void copia_TES(){
 }
 
 
+void tcp_envia_AQT(){
+	strcpy(buffer, "AQT <resto>\n\0");
+	printf("Definir como mandar o AQT\n");
+	tcp_write(13);
+	return;	
+}
+
+
 void tcp_trata_mensagem(){
+	/* 	
+	-(INPUT)->  RQT SID\n  
+	<-(OUTPUT)- AQT QID time size data\n 
+				time: DDMMMYYYY_HH:MM:SS
+					  09JAN2015_20:00:00
+		  NOTA: apanhar o QID e size com ciclo ate ler ' '
+	
+	-(INPUT)->  RQS SID V1 V2 V3 V4 V5\n
+	<-(OUTPUT)- AQS QID score\n	
+	*/
 
 	tcp_input_buffer = (char*)malloc(sizeof(char)* 10+ QID_SIZE + 12);
 
-	tcp_read(tcp_input_buffer);
+	tcp_read(tcp_input_buffer, 4);
 	
-	if( tcp_input_buffer[0] == 'R' &&
-		tcp_input_buffer[1] == 'Q' &&
-		tcp_input_buffer[2] == 'T' &&
-		tcp_input_buffer[3] == ' ')
-	{
+	if( !strcmp("RQT ", buffer)){
 		printf("Mensagem entrou no rqt; strtok do numero;\n");
-		copia_TES();
+		tcp_read(6); /* le SID*5 + espaco + \n */
+		
+		cria_instancia_QID(studID);
+		tcp_envia_AQT();
+	}
+	else{
+		printf("Fazer o RQS!!\n");
 	}
 	
 	free(tcp_input_buffer);

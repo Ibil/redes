@@ -173,6 +173,13 @@ int conta_digitos_int(int numero){
 	}
 	return n_digitos;
 }
+int conta_digitos_long_int(long int numero){
+	int n_digitos;
+	for( n_digitos = 1; numero > 10; n_digitos++){
+		numero = numero/10;
+	}
+	return n_digitos;
+}
 
 
 long int get_file_size(){
@@ -193,6 +200,8 @@ void tcp_envia_AQT(){
 	long int file_size;
 	char s_QID[5];
 	char *dados;
+	long int n_digitos;
+	char *s_size_of_data;
 	
 	printf("Concatenar <AQT QID time size data\n>");
 	
@@ -203,24 +212,27 @@ void tcp_envia_AQT(){
 	tcp_write(" ", 1);
 	
 	
-	/* fazer set_time*/
+	/* fazer set_time
+	time: DDMMMYYYY_HH:MM:SS
+		  09JAN2016_20:00:00
+	*/
 	printf("que raio e set_time???\n");
 	
-	/*tcp_write(set_time(), 18);*/
+	tcp_write("09JAN2016_20:00:00", 18);
 	tcp_write(" ", 1);
 	
+	
+	
 	file_size = get_file_size();
-	
-	
-	/*sprintf(*/
-	
-	
-	/*tcp_write( tostring(file_size) , );*/
+	n_digitos = conta_digitos_long_int(file_size);
+	s_size_of_data = (char*)malloc(n_digitos * sizeof(char));
+	sprintf(s_size_of_data, "%ld", n_digitos);
+	tcp_write( s_size_of_data, n_digitos);
 	tcp_write(" ", 1);
 	
 	dados=(char*) malloc(file_size*sizeof(char));
 	limpa_buffer(dados,file_size);
-	/* fazer get_dados();*/
+	/*get_dados();*/
 	tcp_write(dados,file_size);
 	free(dados);
 	
@@ -256,7 +268,7 @@ void tcp_trata_mensagem(){
 		
 		cria_instancia_QID(studID);
 		printf("tirar comment do tcp_envia_aqt\n");
-		/*tcp_envia_AQT();*/
+		tcp_envia_AQT();
 	}
 	else{
 		printf("Fazer o RQS!!\n");

@@ -14,7 +14,7 @@ char udp_hostname[] = "localhost";
 
 char ECSname[50];
 int ECSport;
-int SID;
+int SID, questID;
 char *terminal_input;
 
 int fd, fd2;
@@ -80,7 +80,7 @@ int tcp_connect(int fd_param){
 	memset((void*)&serveraddr2, (int)'\0',sizeof(serveraddr2));
 	serveraddr2.sin_family = AF_INET;
 	serveraddr2.sin_addr.s_addr = ((struct in_addr *)(hostptr2->h_addr_list[0]))->s_addr;
-	printf("atoi(port_tes): %d", atoi(port_tes));
+	printf("atoi(port_tes): %d\n", atoi(port_tes));
 	serveraddr2.sin_port = htons((short int)atoi(port_tes));
 
 	connect(fd_param,(struct sockaddr*)&serveraddr2,sizeof(serveraddr2));
@@ -120,6 +120,28 @@ void tcp_read(char *msg, int nbytestoread){
 		ptr+=nread;
 	}
 	printf("A resposta lida foi : %s\n", buffer_rqt);
+	return;
+}
+
+void tcp_read_alt(char *msg){
+	char *ptr_temp;
+	
+	printf("Vou ler a mensagem\n");
+	ptr_temp=&msg[0];
+	
+	
+	do{
+		if((nread = read(fd2,ptr_temp,1)) == -1){
+			printf("Erro a ler a mensagem\n");
+			exit(1);
+		}
+		printf("O char : %c\n", (*ptr_temp));
+		ptr_temp+=nread;
+	}
+	while( (*(ptr_temp-1))!=' ' );
+	
+	puts("SAI!");
+	printf("recebi a mensagem : %s\n", msg);
 	return;
 }
 
@@ -204,8 +226,9 @@ void udp_request(char* input){
 	ip_tes = (char*)malloc( strlen(ptr) * sizeof(char) );
 	strcpy(ip_tes,ptr);
 	
-	port_tes = strtok(NULL, " ");
-	
+	ptr = strtok(NULL, " ");
+	port_tes = (char*)malloc( strlen(ptr) * sizeof(char) );
+	strcpy(port_tes,ptr);
 
 	/*printf("Recebi mensagem AWTES: %s\n", buffer_tn);*/
 
@@ -222,6 +245,12 @@ void udp_request(char* input){
 
 void tcp_RQT(){
 	char tes_rqt[255];
+	char tes_aqt[255];
+	char *s_quest_ID;
+	char *deadline;
+	char s_file_size[255];
+	long int file_size;
+	char *data;
 	fd2 = tcp_connect(fd2);
 
 
@@ -231,7 +260,32 @@ void tcp_RQT(){
 	printf("antes do write\n");
 	tcp_write(tes_rqt, 10);
 
+	tcp_read(tes_aqt, 4);
+	if( !strcmp("AQT ", tes_aqt)){
+		/*mensagem AQT QID time size data*/
+		/* Le o QID e grava */
+		tcp_read(s_quest_ID, 5);
+		questID = atoi(s_quest_ID);
+		tcp_read(s_quest_ID, 1);
+		/*Le a data*/
+		tcp_read(deadline, 18);
+		
+		/*Le o tamanho do ficheiro*/
+		tcp_read_alt(s_file_size);
+		file_size = atoi(s_file_size);
+
+		/*Aloca memória para o ficheiro e le-o*/
+		data = (char*)malloc(file_size*sizeof(char));
+		tcp_read(data, file_size);
+		
+		/*Adeus \n*/
+		tcp_read(s_quest_ID, 1);
+	}
+	else printf("houve merda\n");
+
 	tcp_close(fd2);
+
+	printf("Questionario %d.pdf recebido.\nTem ate %s para responder.", questID, deadline);
 }
 
 

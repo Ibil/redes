@@ -1,0 +1,20 @@
+segunda:
+9 -> 11 pedro alex(-1) filipe 
+	14-> 17 pedro filipe 
+
+terça:
+  12.30 pedro
+  14.30 filipe
+  15.30 alex
+
+
+quinta:
+	9-11 alex(-2) filipe
+		12.30 pedro
+		14.30 filipe(-2)
+		15.30 alex
+
+sexta:
+	9-11 pedro, filipe, alex
+		14.30 pedro filipe
+		15.30 alex

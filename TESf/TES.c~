@@ -115,20 +115,22 @@ void tcp_connect(){
 	return;
 }
 
-void tcp_read(char* buffer, int nbytestoread){
-	printf("Vou ler a mensagem\n");
-	ptr=buffer;
-	do{
-		if((nread = read(newfd,ptr,1)) == -1){
-			printf("Erro a ler a mensagem\n");
+void tcp_read(char *msg, int nbytestoread){
+	char *ptr;
+	nleft=nbytestoread;
+	/* vou escrever por cima que nao faz mal neste exemplo*/
+	ptr=msg;
+	printf("Vou ler a resposta\n");
+	while(nleft>0){
+		if((nread = read(fd,ptr,nleft)) == -1){
+			printf("Erro a ler a resposta: %s\n", msg);
 			exit(1);
 		}
-		printf("O char : %c\n", (*ptr));
+		nleft-=nread;
 		ptr+=nread;
+		printf("houve merda?\n");
 	}
-	while( (*(ptr-1))!='\n' );
-	
-	printf("recebi a mensagem : %s\n", buffer);
+	printf("A resposta lida foi : %s\n", msg);
 	return;
 }
 
@@ -199,7 +201,10 @@ char* get_dados(char* dados){
 	FILE *fp_pdf;
 	
 	fp_pdf = fopen("aula2.pdf", "r+");
-	while(0 < fscanf(fp_pdf,"%s",dados));
+	while(0 < fscanf(fp_pdf,"%s",dados)){
+		printf("Fazer: mandar linha a linha\n");
+		
+	}
 
 	fclose(fp_pdf);
 	return dados;
@@ -271,8 +276,10 @@ void tcp_trata_mensagem(){
 	limpa_buffer(tcp_input_buffer, 27);
 	
 	tcp_read(tcp_input_buffer, 4);
+	printf("buffer: %s", tcp_input_buffer);
 	if( !strcmp("RQT ", tcp_input_buffer)){
 		/* Le o SID e grava */
+		printf("entrei no RQT\n");
 		tcp_read(s_stud_ID, 5);
 		studID =atoi(s_stud_ID);
 		/* come o '\n'*/
@@ -294,7 +301,7 @@ void tcp_trata_mensagem(){
 void tcp_TES(){
 	while(1){
 		tcp_connect();
-	
+
 		tcp_trata_mensagem();
 	
 		tcp_close();

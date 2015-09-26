@@ -115,7 +115,7 @@ void tcp_connect(){
 	return;
 }
 
-void tcp_read(char* buffer, int nbytestoread){
+/*void tcp_read(char* buffer, int nbytestoread){
 	printf("Vou ler a mensagem\n");
 	ptr=buffer;
 	do{
@@ -129,6 +129,24 @@ void tcp_read(char* buffer, int nbytestoread){
 	while( (*(ptr-1))!='\n' );
 	
 	printf("recebi a mensagem : %s\n", buffer);
+	return;
+}*/
+
+void tcp_read(char *buffer, int nbytestoread){
+	char *ptr;
+	nleft=nbytestoread;
+	/* vou escrever por cima que nao faz mal neste exemplo*/
+	ptr=buffer;
+	printf("Vou ler a resposta\n");
+	while(nleft>0){
+		if((nread = read(newfd,ptr,nleft)) == -1){
+			printf("Erro a ler a resposta\n");
+			exit(1);
+		}
+		nleft-=nread;
+		ptr+=nread;
+	}
+	printf("A resposta lida foi : %s\n", buffer);
 	return;
 }
 
@@ -274,8 +292,10 @@ void tcp_trata_mensagem(){
 	limpa_buffer(tcp_input_buffer, 27);
 	
 	tcp_read(tcp_input_buffer, 4);
+	printf("buffer: %s", tcp_input_buffer);
 	if( !strcmp("RQT ", tcp_input_buffer)){
 		/* Le o SID e grava */
+		printf("entrei no RQT\n");
 		tcp_read(s_stud_ID, 5);
 		studID =atoi(s_stud_ID);
 		/* come o '\n'*/
@@ -297,7 +317,7 @@ void tcp_trata_mensagem(){
 void tcp_TES(){
 	while(1){
 		tcp_connect();
-	
+
 		tcp_trata_mensagem();
 	
 		tcp_close();

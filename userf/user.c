@@ -253,7 +253,8 @@ void tcp_RQT(){
 	char *data;
 	fd2 = tcp_connect(fd2);
 
-
+	limpa_buffer(tes_aqt, 255);
+	
 	printf("antes do sprintf\n");
 	sprintf(tes_rqt, "RQT %d\n", SID);
 

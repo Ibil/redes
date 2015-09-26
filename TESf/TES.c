@@ -166,25 +166,14 @@ void limpa_buffer(char* buffer, int tamanho){
 
 
 
-/*
 int conta_digitos_int(int numero){
-	int i, n_digitos;
-	char* s_numero;
-	for( n_digitos = 1; numero < 10; n_digitos++){
+	int n_digitos;
+	for( n_digitos = 1; numero > 10; n_digitos++){
 		numero = numero/10;
 	}
-	return 
+	return n_digitos;
 }
-*/
 
-int elevado(int base, int expoente){
-	int resultado = base;
-	int i;
-	for(i = 1; i < expoente; i++){
-		resultado = resultado * resultado;
-	}
-	return resultado;
-}
 
 long int get_file_size(){
 	FILE *fp_pdf;
@@ -214,11 +203,13 @@ void tcp_envia_AQT(){
 	tcp_write("AQT ", 4);
 	
 	sprintf(s_QID,"%d", QID_index);
-	tcp_write(s_QID, strlen(s_QID));
+	tcp_write(s_QID, conta_digitos(QID_index));
 	tcp_write(" ", 1);
 	
 	
 	/* fazer set_time*/
+	printf("que raio e set_time???\n");
+	
 	/*tcp_write(set_time(), 18);*/
 	tcp_write(" ", 1);
 	

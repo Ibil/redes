@@ -289,6 +289,26 @@ void tcp_RQT(){
 	printf("Questionario %d.pdf recebido.\nTem ate %s para responder.", questID, deadline);
 }
 
+char* tcp_submit(char* input){
+	char answers[10];
+	char rqs_msg[255];
+	int i;	
+
+	for(i=0;i<10;i=i+2){
+		scanf("%s", &answers[i]);
+		answers[i+1]=' ';
+	}
+
+	printf("%s\n", answers);
+	/*fd2 = tcp_connect(fd2);*/
+
+	sprintf(rqs_msg, "RQS %d %d %s", SID, questID, answers);
+	printf("%s\n", rqs_msg);	
+	
+
+	/*tcp_write(rqs_msg, 26);*/
+	return "0";
+}
 
 void trata_args(char* arg1, char* arg2){
 	if(!strcmp(arg1,"-n")){
@@ -334,6 +354,9 @@ int main(int argc, char **argv){
 		if(!strcmp(terminal_input, "request")){
 			udp_request(terminal_input);
 			tcp_RQT();
+		}
+		if(!strcmp(terminal_input, "submit")){
+			printf("%s\n", tcp_submit(terminal_input));
 			printf("Falta fazer o tcp_RQT a ligar ao TES\n");
 		}
 		if(!strcmp(terminal_input, "exit")){

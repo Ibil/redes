@@ -18,16 +18,20 @@ int ECSport;
 int SID;
 char *terminal_input;
 
-int fd;
+int fd, fd2;
 struct hostent *hostptr;
+struct hostent *hostptr2;
 struct sockaddr_in serveraddr;
-int addrlen;
+struct sockaddr_in serveraddr2;
+int addrlen, addrlen2, nleft, nwritten, nread;
 
 extern int errno;
 /* 192.168.128.1 */
 
 char *buffer_tn;
+char *buffer_rqt;
 char *ip_tes, *port_tes;
+char *tes_rqt;
 #define MAXBUFFSIZE 2580
 
 
@@ -62,6 +66,60 @@ void udp_close(int fd){
 	close(fd);
 	return;
 }
+
+int tcp_connect(int fd){
+	fd=socket(AF_INET,SOCK_STREAM,0);
+	hostptr2 = gethostbyname(ip_tes);
+
+	memset((void*)&serveraddr2, (int)'\0',sizeof(serveraddr2));
+	serveraddr2.sin_family=AF_INET;
+	serveraddr2.sin_addr.s_addr=((struct in_addr *)(hostptr2->h_addr_list[0]))->s_addr;
+	serveraddr2.sin_port=htons((short int)atoi(port_tes));
+
+	connect(fd,(struct sockaddr*)&serveraddr2,sizeof(serveraddr2));
+   printf("connect aceite\n");
+   return fd;
+}
+
+void tcp_write(char* msg, int nbytestowrite){
+	char *ptr;
+	ptr = msg;   
+	nleft=nbytestowrite;
+   printf("vou enviar mensagem: %s\n", ptr);
+	while(nleft > 0)	{
+		if( (nwritten=write(fd,msg,nleft)) == -1){
+			printf("erro no write\n");
+			exit(1);
+		}
+		nleft-=nwritten;
+		ptr+=nwritten;
+	}
+	printf("Mensagem Enviada\n");
+	return;
+}
+
+void tcp_read(char *msg, int nbytestoread){
+	char *ptr;
+	nleft=nbytestoread;
+	/* vou escrever por cima que nao faz mal neste exemplo*/
+	ptr=msg;
+	printf("Vou ler a resposta\n");
+	while(nleft>0){
+		if((nread = read(fd,ptr,nleft)) == -1){
+			printf("Erro a ler a resposta\n");
+			exit(1);
+		}
+		nleft-=nread;
+		ptr+=nread;
+	}
+	printf("A resposta lida foi : %s\n", buffer_rqt);
+	return;
+}
+
+void tcp_close(int fd){
+	close(fd);
+}
+
 
 void limpa_buffer(char* buffer, int tamanho){
 	int i;
@@ -149,6 +207,15 @@ void udp_request(char* input){
 	return;
 }
 
+void tcp_RQT(){
+	fd2 = tcp_connect(fd2);
+
+	char *tes_rqt = 0;
+
+	sprintf(tes_rqt, "RQT %d\n", SID);
+	tcp_write(tes_rqt, 10);
+}
+
 
 void trata_args(char* arg1, char* arg2){
 	if(!strcmp(arg1,"-n")){
@@ -193,7 +260,7 @@ int main(int argc, char **argv){
 		}
 		if(!strcmp(terminal_input, "request")){
 			udp_request(terminal_input);
-			/*tcp_RQT();*/
+			tcp_RQT();
 			printf("Falta fazer o tcp_RQT a ligar ao TES\n");
 		}
 		if(!strcmp(terminal_input, "exit")){

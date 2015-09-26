@@ -1,2 +1,2 @@
-redes 192.168.1.1 80546
-bd 156.25.25.1 7000
+redes localhost 59000
+bd localhost 59000

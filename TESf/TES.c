@@ -195,6 +195,19 @@ long int get_file_size(){
 	return new_pos;
 }
 
+char* get_dados(char* dados){
+	FILE *fp_pdf;
+	
+	fp_pdf = fopen("aula2.pdf", "r+");
+	while(0 < fscanf(fp_pdf,"%s",dados)){
+		printf("Fazer: mandar linha a linha\n");
+		
+	}
+
+	fclose(fp_pdf);
+	return dados;
+}
+
 
 void tcp_envia_AQT(){
 	long int file_size;
@@ -232,8 +245,10 @@ void tcp_envia_AQT(){
 	
 	dados=(char*) malloc(file_size*sizeof(char));
 	limpa_buffer(dados,file_size);
-	/*get_dados();*/
+	printf("TIrar o comment do get dados\n");
+	/*dados = get_dados(dados);
 	tcp_write(dados,file_size);
+	*/
 	free(dados);
 	
 	tcp_write("\n", 1);

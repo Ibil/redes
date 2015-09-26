@@ -251,7 +251,7 @@ void tcp_envia_AQT(){
 	
 	
 	file_size = get_file_size();
-	n_digitos = conta_digitos_int(file_size);
+	n_digitos = conta_digitos_long_int(file_size);
 
 	s_size_of_data = (char*)malloc(n_digitos * sizeof(char));
 	sprintf(s_size_of_data, "%ld", file_size);
@@ -259,12 +259,13 @@ void tcp_envia_AQT(){
 	tcp_write( s_size_of_data, n_digitos);
 	tcp_write(" ", 1);
 	
-	dados=(char*) malloc(file_size*sizeof(char));
+	/*dados=(char*) malloc(file_size*sizeof(char));
 	limpa_buffer(dados,file_size);
 	printf("TIrar o comment do get dados\n");
-	/*dados = get_dados(dados);
+	dados = get_dados(dados);
 	tcp_write(dados,file_size);
 	*/
+	
 	free(dados);
 	
 	tcp_write("\n", 1);

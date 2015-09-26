@@ -1,6 +1,6 @@
 
 
-NOTA: NO user, depois de enviar RQT, apanhar o QID e size com ciclo ate ler ' '
+NOTA: NO user apanhar o QID e size com ciclo ate ler ' '
 
 
 itoa;

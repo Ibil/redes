@@ -14,17 +14,19 @@
 
 #define QID_SIZE 5
 
-int ECPport = DEFAULT_PORT;
+int TESport = DEFAULT_PORT;
 
-int fd;
+int fd, newfd;
+int nread, nwritten,nleft;
 struct sockaddr_in serveraddr, clientaddr;
-int addrlen;
+int addrlen, clientlen;
 
 char* tcp_input_buffer;
+char *ptr;
 
 extern int errno;
 
-static int QID_indez = 0;
+static int QID_index = 0;
 
 /* EStrutura do TES com resultados*/
 
@@ -38,8 +40,8 @@ quest_form db_quest_form[1000];
 
 void cria_instancia_QID(int sid){
 	db_quest_form[QID_index].SID = sid;
-	db_quest_form[QID_index].SID = sid;
-	db_quest_form[QID_index].SID = sid;
+	db_quest_form[QID_index].QID = QID_index;
+	db_quest_form[QID_index].Score = 101;    /* 101 simboliza -1*/
 	QID_index++;
 }
 
@@ -47,14 +49,14 @@ void cria_instancia_QID(int sid){
 
 
 /* ################   FUncoes UDP ################*/
-
+/*
 int udp_open_socket(int fd){
 	fd = socket(AF_INET, SOCK_DGRAM,0);
 	
 	memset((void*)&serveraddr, (int)'\0', sizeof(serveraddr));
 	serveraddr.sin_family=AF_INET;
 	serveraddr.sin_addr.s_addr=htonl(INADDR_ANY);
-	serveraddr.sin_port=htons((int)ECPport);
+	serveraddr.sin_port=htons((int)TESport);
 	
 	if (bind(fd,(struct sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
 		printf("Erro no bind : \n");
@@ -81,7 +83,7 @@ void udp_close(int fd){
 	close(fd);
 	return;
 }
-
+*/
 /* ################   fim FUncoes UDP ################*/
 
 /* ################   FUncoes tcp ################*/
@@ -94,7 +96,7 @@ void tcp_connect(){
 	memset((void*) &serveraddr, (int)'\0',sizeof(serveraddr));
 	serveraddr.sin_family=AF_INET;
 	serveraddr.sin_addr.s_addr=htonl(INADDR_ANY);
-	serveraddr.sin_port=htons((short int)PORT);
+	serveraddr.sin_port=htons((short int)TESport);
 	if (bind(fd,(struct sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
 		printf("Erro no bind : \n");
 		exit(1);
@@ -154,123 +156,88 @@ void tcp_close(){
 
 /* ################   fim FUncoes tcp ################*/
 
-void copia_Tnames(){
-	FILE *fp_txt;
-	int t_number;
-	
-	char TES_name[25];
-	char TES_ip[15];
-	char TES_port[6];
-	int indice_buffer;
-	int name_size;
+void limpa_buffer(char* buffer, int tamanho){
 	int i;
-	
-	fp_txt = fopen("topics.txt", "r+");
-	/* ve quantos topicos ha */
-	for(t_number = 1;
-		1 < fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
-		t_number++);
-		
-	t_number--; /* pois o for incrementa antes de sair*/
-	
-	if(t_number < 10){
-		udp_buffer[4] =  t_number + '0';
-		indice_buffer = 5;
+	for(i=0;i<tamanho;i++){
+		buffer[i] = '\0';
 	}
-	else{
-		udp_buffer[4] =  t_number/10 + '0';
-		udp_buffer[5] =  t_number%10 + '0';
-		indice_buffer = 6;
-	}
-	
-	fseek(fp_txt, 0,SEEK_SET);
-	/* vai passar as linhas para o buffer uma a uma*/
-	for(t_number = 1;
-		1 < fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
-		t_number++){
-		
-		name_size = strlen(TES_name);
-		
-		/* poe o nome*/
-		udp_buffer[indice_buffer]= ' ';
-		indice_buffer++;
-		for( i = 0; i < name_size; i++){
-			udp_buffer[indice_buffer+i]= TES_name[i];
-		}
-		indice_buffer += name_size;
-	}
-	udp_buffer[indice_buffer] = '\n';
-	udp_buffer[indice_buffer+1] = '\0';
-	fclose(fp_txt);
-	
-}
-
-void copia_TES(){
-	int topic_index;
-	int buffer_index;
-	int t_number, i, ip_size, port_size;
-	
-	FILE *fp_txt;
-	
-	char TES_name[25];
-	char TES_ip[15];
-	char TES_port[6];
-	
-	/*
-	input: "TER Tn\n\0"
-	outpu: "AWTES ip port\n\0"
-	*/
-	
-	/* Guardo o Topic_number*/
-	if(udp_buffer[5] == ' '){
-		topic_index = udp_buffer[4];
-	}
-	else{
-		topic_index = udp_buffer[4]*10 + udp_buffer[5];
-	}
-	strcpy(udp_buffer, "AWTES ");
-	buffer_index = 6;
-	
-	fp_txt = fopen("topics.txt", "r+");
-	
-
-	/*Procura o topic_index*/	
-	for(t_number = 1; t_number <= topic_index; t_number++){
-		fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
-	}
-	
-	ip_size = strlen(TES_ip);
-	port_size = strlen(TES_port);
-	
-	/* por o ip*/
-	for( i = 0; i < ip_size; i++){
-		udp_buffer[buffer_index+i]= TES_ip[i];
-	}
-	buffer_index += ip_size;
-	
-	/* por a porta*/
-	udp_buffer[buffer_index]= ' ';
-	buffer_index++;
-	
-	for( i = 0; i < port_size; i++){
-		udp_buffer[buffer_index+i]= TES_port[i];
-	}
-	buffer_index += port_size;
-
-	/* poe \n e \0 para funcionar bem*/
-	udp_buffer[buffer_index] = '\n';
-	udp_buffer[buffer_index+1] = '\0';
-	
-	printf("O udp_buffer com %d size, awtes : %s", strlen(udp_buffer),udp_buffer);
-	fclose(fp_txt);
 	return;
 }
 
 
+
+/*
+int conta_digitos_int(int numero){
+	int i, n_digitos;
+	char* s_numero;
+	for( n_digitos = 1; numero < 10; n_digitos++){
+		numero = numero/10;
+	}
+	return 
+}
+*/
+
+int elevado(int base, int expoente){
+	int resultado = base;
+	int i;
+	for(i = 1; i < expoente; i++){
+		resultado = resultado * resultado;
+	}
+	return resultado;
+}
+
+long int get_file_size(){
+	FILE *fp_pdf;
+	int t_number;
+	
+	int indice_buffer;
+	int name_size;
+	int i;
+	long int new_pos;
+	
+	fp_pdf = fopen("aula2.pdf", "r+");
+	fseek(fp_pdf, 0,SEEK_END);
+	new_pos = ftell(fp_pdf);
+
+	fclose(fp_pdf);
+	return new_pos;
+}
+
+
 void tcp_envia_AQT(){
-	strcpy(buffer, "AQT <resto>\n\0");
-	printf("Definir como mandar o AQT\n");
-	tcp_write(13);
+	long int file_size;
+	char s_QID[5];
+	char *dados;
+	
+	printf("Concatenar <AQT QID time size data\n>");
+	
+	tcp_write("AQT ", 4);
+	
+	sprintf(s_QID,"%d", QID_index);
+	tcp_write(s_QID, strlen(s_QID));
+	tcp_write(" ", 1);
+	
+	
+	/* fazer set_time*/
+	/*tcp_write(set_time(), 18);*/
+	tcp_write(" ", 1);
+	
+	file_size = get_file_size();
+	
+	
+	/*sprintf(*/
+	
+	
+	/*tcp_write( tostring(file_size) , );*/
+	tcp_write(" ", 1);
+	
+	dados=(char*) malloc(file_size*sizeof(char));
+	limpa_buffer(dados,file_size);
+	/* fazer get_dados();*/
+	tcp_write(dados,file_size);
+	free(dados);
+	
+	tcp_write("\n", 1);
 	return;	
 }
 
@@ -281,22 +248,28 @@ void tcp_trata_mensagem(){
 	<-(OUTPUT)- AQT QID time size data\n 
 				time: DDMMMYYYY_HH:MM:SS
 					  09JAN2015_20:00:00
-		  NOTA: apanhar o QID e size com ciclo ate ler ' '
 	
 	-(INPUT)->  RQS SID V1 V2 V3 V4 V5\n
 	<-(OUTPUT)- AQS QID score\n	
 	*/
-
-	tcp_input_buffer = (char*)malloc(sizeof(char)* 10+ QID_SIZE + 12);
-
-	tcp_read(tcp_input_buffer, 4);
 	
-	if( !strcmp("RQT ", buffer)){
-		printf("Mensagem entrou no rqt; strtok do numero;\n");
-		tcp_read(6); /* le SID*5 + espaco + \n */
+	int studID;
+	char s_stud_ID[5];
+	
+	tcp_input_buffer = (char*)malloc(sizeof(char)* 10+ QID_SIZE + 12);
+	limpa_buffer(tcp_input_buffer, 27);
+	
+	tcp_read(tcp_input_buffer, 4);
+	if( !strcmp("RQT ", tcp_input_buffer)){
+		/* Le o SID e grava */
+		tcp_read(s_stud_ID, 5);
+		studID =atoi(s_stud_ID);
+		/* come o '\n'*/
+		tcp_read(tcp_input_buffer, 1);
 		
 		cria_instancia_QID(studID);
-		tcp_envia_AQT();
+		printf("tirar comment do tcp_envia_aqt\n");
+		/*tcp_envia_AQT();*/
 	}
 	else{
 		printf("Fazer o RQS!!\n");
@@ -319,11 +292,11 @@ void tcp_TES(){
 
 
 int main(int argc, char **argv){
-	int i, ppid;
+	int ppid;
 	switch(argc){
-		case 1 : ECPport = DEFAULT_PORT;
+		case 1 : TESport = DEFAULT_PORT;
 			     break;
-		case 3 : !strcmp(argv[1],"-p") ? ECPport= atoi(argv[2]) : exit(-1);
+		case 3 : !strcmp(argv[1],"-p") ? TESport= atoi(argv[2]) : exit(-1);
 		         break;
 		default:printf("Erro no número de argumentos");
 	}

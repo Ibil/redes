@@ -67,10 +67,16 @@ void udp_close(int fd){
 }
 
 int tcp_connect(int fd_param){
+	printf("ENtrei no connect\n");
 	fd_param = socket(AF_INET,SOCK_STREAM,0);
-	printf("ip_tes: %d", ip_tes);
+	printf("fiz socket\n");
+	fflush(stdout);
+	/*printf("ip_tes: %s", ip_tes);*/
+	printf("antes do gethost\n");
 	hostptr2 = gethostbyname(ip_tes);
-
+	
+	printf("fiz gethost\n");
+	
 	memset((void*)&serveraddr2, (int)'\0',sizeof(serveraddr2));
 	serveraddr2.sin_family = AF_INET;
 	serveraddr2.sin_addr.s_addr = ((struct in_addr *)(hostptr2->h_addr_list[0]))->s_addr;
@@ -162,6 +168,7 @@ int udp_list(){
 void udp_request(char* input){
 	int Tn;
 	char *msg;
+	char *ptr;
 
 	/* trata input */
 	scanf("%d", &Tn);
@@ -193,14 +200,20 @@ void udp_request(char* input){
 
 	strtok(buffer_tn, " ");
 	
-	ip_tes = strtok(NULL, " ");
-
-	port_tes = strtok(NULL, " ");
+	ptr = strtok(NULL, " ");
+	ip_tes = (char*)malloc( strlen(ptr) * sizeof(char) );
+	strcpy(ip_tes,ptr);
 	
+	ptr = strtok(NULL, " ");
+	port_tes = (char*)malloc( strlen(ptr) * sizeof(char) );
+	strcpy(port_tes,ptr);
 
 	/*printf("Recebi mensagem AWTES: %s\n", buffer_tn);*/
 
 	printf("Ip:\t %s Port:\t %s", ip_tes, port_tes);
+	
+	
+	
 	
 	free (buffer_tn);
 	udp_close(fd);
@@ -210,7 +223,6 @@ void udp_request(char* input){
 
 void tcp_RQT(){
 	char tes_rqt[255];
-	printf("antes do connect\n");
 	fd2 = tcp_connect(fd2);
 
 

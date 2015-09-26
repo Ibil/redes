@@ -231,10 +231,8 @@ void tcp_envia_AQT(){
 	long int file_size;
 	char s_QID[5];
 	char *dados;
-	long int n_digitos;
+	int n_digitos;
 	char *s_size_of_data;
-	
-	printf("Concatenar <AQT QID time size data\n>");
 	
 	tcp_write("AQT ", 4);
 	
@@ -248,25 +246,25 @@ void tcp_envia_AQT(){
 		  09JAN2016_20:00:00
 	*/
 	printf("que raio e set_time???\n");
-	
 	tcp_write("09JAN2016_20:00:00", 18);
 	tcp_write(" ", 1);
 	
 	
-	
 	file_size = get_file_size();
-	n_digitos = conta_digitos_long_int(file_size);
+	n_digitos = conta_digitos_int(file_size);
+
 	s_size_of_data = (char*)malloc(n_digitos * sizeof(char));
-	sprintf(s_size_of_data, "%ld", n_digitos);
+	sprintf(s_size_of_data, "%ld", file_size);
+	
 	tcp_write( s_size_of_data, n_digitos);
 	tcp_write(" ", 1);
 	
 	dados=(char*) malloc(file_size*sizeof(char));
 	limpa_buffer(dados,file_size);
 	printf("TIrar o comment do get dados\n");
-	/*dados = get_dados(dados);
+	dados = get_dados(dados);
 	tcp_write(dados,file_size);
-	*/
+	
 	free(dados);
 	
 	tcp_write("\n", 1);

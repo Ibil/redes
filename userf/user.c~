@@ -67,18 +67,20 @@ void udp_close(int fd){
 	return;
 }
 
-int tcp_connect(int fd){
-	fd=socket(AF_INET,SOCK_STREAM,0);
+int tcp_connect(int fd_param){
+	fd_param=socket(AF_INET,SOCK_STREAM,0);
+	printf("ip_tes: %d", ip_tes);
 	hostptr2 = gethostbyname(ip_tes);
 
 	memset((void*)&serveraddr2, (int)'\0',sizeof(serveraddr2));
 	serveraddr2.sin_family=AF_INET;
 	serveraddr2.sin_addr.s_addr=((struct in_addr *)(hostptr2->h_addr_list[0]))->s_addr;
+	printf("atoi(port_tes): %d", atoi(port_tes));
 	serveraddr2.sin_port=htons((short int)atoi(port_tes));
 
-	connect(fd,(struct sockaddr*)&serveraddr2,sizeof(serveraddr2));
+	connect(fd_param,(struct sockaddr*)&serveraddr2,sizeof(serveraddr2));
    printf("connect aceite\n");
-   return fd;
+   return fd_param;
 }
 
 void tcp_write(char* msg, int nbytestowrite){
@@ -208,12 +210,18 @@ void udp_request(char* input){
 }
 
 void tcp_RQT(){
+	char tes_rqt[255];
+	printf("antes do connect\n");
 	fd2 = tcp_connect(fd2);
 
-	char *tes_rqt = 0;
 
+	printf("antes do sprintf\n");
 	sprintf(tes_rqt, "RQT %d\n", SID);
+
+	printf("antes do write\n");
 	tcp_write(tes_rqt, 10);
+
+	tcp_close(fd2);
 }
 
 

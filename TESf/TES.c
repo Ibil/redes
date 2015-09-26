@@ -177,11 +177,7 @@ int conta_digitos_int(int numero){
 
 long int get_file_size(){
 	FILE *fp_pdf;
-	int t_number;
-	
-	int indice_buffer;
-	int name_size;
-	int i;
+
 	long int new_pos;
 	
 	fp_pdf = fopen("aula2.pdf", "r+");
@@ -203,7 +199,7 @@ void tcp_envia_AQT(){
 	tcp_write("AQT ", 4);
 	
 	sprintf(s_QID,"%d", QID_index);
-	tcp_write(s_QID, conta_digitos(QID_index));
+	tcp_write(s_QID, conta_digitos_int(QID_index));
 	tcp_write(" ", 1);
 	
 	

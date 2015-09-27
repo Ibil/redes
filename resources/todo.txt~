@@ -1,12 +1,8 @@
 
 
+fazer set_time
+
 NOTA: NO user, depois de enviar RQT, apanhar o QID e size com ciclo ate ler ' '
-
-
-itoa;
-
-
-tamanho de int vs long it
 
 
 fazer RQS no TES

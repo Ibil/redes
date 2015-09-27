@@ -234,6 +234,8 @@ void tcp_envia_AQT(){
 	int n_digitos;
 	char *s_size_of_data;
 	
+	int contador = 0;
+	
 	tcp_write("AQT ", 4);
 	
 	sprintf(s_QID,"%d", QID_index);
@@ -259,6 +261,7 @@ void tcp_envia_AQT(){
 	tcp_write( s_size_of_data, n_digitos);
 	tcp_write(" ", 1);
 	
+	
 	/*dados=(char*) malloc(file_size*sizeof(char));
 	limpa_buffer(dados,file_size);
 	printf("TIrar o comment do get dados\n");
@@ -266,6 +269,7 @@ void tcp_envia_AQT(){
 	tcp_write(dados,file_size);
 	free(dados);
 	*/
+	
 	
 	tcp_write("\n", 1);
 	return;	

@@ -119,7 +119,7 @@ void tcp_read(char *msg, int nbytestoread){
 		nleft-=nread;
 		ptr+=nread;
 	}
-	printf("A resposta lida foi : %s\n", buffer_rqt);
+	printf("A resposta lida foi : %s\n", msg);
 	return;
 }
 
@@ -235,8 +235,6 @@ void udp_request(char* input){
 	printf("Ip:\t %s Port:\t %s", ip_tes, port_tes);
 	
 	
-	
-	
 	free (buffer_tn);
 	udp_close(fd);
 	
@@ -246,41 +244,51 @@ void udp_request(char* input){
 void tcp_RQT(){
 	char tes_rqt[255];
 	char tes_aqt[255];
-	char *s_quest_ID;
-	char *deadline;
+	
+	char s_quest_ID[6];
+	char deadline[18];
+	
 	char s_file_size[255];
 	long int file_size;
 	char *data;
+	
+	
+	limpa_buffer(tes_rqt, 255);
+	limpa_buffer(tes_aqt, 255);
+	limpa_buffer(s_quest_ID, 6);
+	
 	fd2 = tcp_connect(fd2);
 
-	limpa_buffer(tes_aqt, 255);
-	
-	printf("antes do sprintf\n");
+	/* evia <RQT SID\n> */
 	sprintf(tes_rqt, "RQT %d\n", SID);
-
-	printf("antes do write\n");
 	tcp_write(tes_rqt, 10);
 
+	printf("VOu ler o AQT\n\n");
+	/* Le o <AQT QID TIME SIZE DATA\N> */
 	tcp_read(tes_aqt, 4);
 	if( !strcmp("AQT ", tes_aqt)){
-		/*mensagem AQT QID time size data*/
-		/* Le o QID e grava */
-		tcp_read(s_quest_ID, 5);
-		questID = atoi(s_quest_ID);
-		tcp_read(s_quest_ID, 1);
-		/*Le a data*/
-		tcp_read(deadline, 18);
 		
-		/*Le o tamanho do ficheiro*/
-		tcp_read_alt(s_file_size);
+		printf("ESta mal!! QID pode ser 1 ou 10 ou 100. nao necessariamente 5 digitos!!\n");
+		tcp_read(s_quest_ID, 5);	/* Le o QID e grava */
+		s_quest_ID[5] = '\0';
+		questID = atoi(s_quest_ID);
+		printf("o QID : %d\n", questID);
+		tcp_read(s_quest_ID, 1);    /* le ' ' */
+		tcp_read(deadline, 18);		/*Le o time */
+		tcp_read(s_quest_ID, 1);	/* le ' ' */
+		tcp_read_alt(s_file_size);	/*Le o tamanho do ficheiro*/
 		file_size = atoi(s_file_size);
+		printf(" o tamanho : %ld\n", file_size);
+		
+		tcp_read(s_quest_ID, 1);	/* le ' ' */
 
-		/*Aloca memória para o ficheiro e le-o*/
+		/*
 		data = (char*)malloc(file_size*sizeof(char));
 		tcp_read(data, file_size);
 		
-		/*Adeus \n*/
-		tcp_read(s_quest_ID, 1);
+		*/
+		tcp_read(s_quest_ID, 1); /* le '\n' */
+		
 	}
 	else printf("houve merda\n");
 
@@ -357,7 +365,6 @@ int main(int argc, char **argv){
 		}
 		if(!strcmp(terminal_input, "submit")){
 			printf("%s\n", tcp_submit(terminal_input));
-			printf("Falta fazer o tcp_RQT a ligar ao TES\n");
 		}
 		if(!strcmp(terminal_input, "exit")){
 			break;

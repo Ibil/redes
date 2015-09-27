@@ -216,7 +216,7 @@ char* get_dados(char* dados, int file_size){
 	FILE *fp_pdf;
 	
 	fp_pdf = fopen("aula2.pdf", "r+");
-	fread(dados,file_size,file_size, fp_pdf);
+	fread(dados,sizeof(char),file_size, fp_pdf);
 	fclose(fp_pdf);
 	return dados;
 }

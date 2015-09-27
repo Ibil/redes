@@ -224,7 +224,7 @@ char* get_dados(char* dados, int file_size){
 
 void tcp_envia_AQT(){
 	long int file_size;
-	char s_QID[5];
+	char s_QID[25];
 	char *dados;
 	int n_digitos;
 	char *s_size_of_data;
@@ -233,6 +233,7 @@ void tcp_envia_AQT(){
 	
 	tcp_write("AQT ", 4);
 	
+	limpa_buffer(s_QID, 25);
 	sprintf(s_QID,"%d", QID_index);
 	tcp_write(s_QID, conta_digitos_int(QID_index));
 	tcp_write(" ", 1);

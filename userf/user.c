@@ -119,6 +119,7 @@ void tcp_read(char *msg, int nbytestoread){
 		nleft-=nread;
 		ptr+=nread;
 	}
+	puts("sair do read");
 	printf("A resposta lida foi : %s\n", msg);
 	return;
 }
@@ -140,8 +141,8 @@ void tcp_read_alt(char *msg){
 	}
 	while( (*(ptr_temp-1))!=' ' );
 	
-	puts("SAI!");
-	printf("recebi a mensagem : %s\n", msg);
+	puts("sair do read alt");
+	printf("A resposta lida foi: %s\n", msg);
 	return;
 }
 
@@ -245,17 +246,22 @@ void tcp_RQT(){
 	char tes_rqt[255];
 	char tes_aqt[255];
 	
-	char s_quest_ID[6];
-	char deadline[18];
+	char s_quest_ID[25];
+	char deadline[19];
 	
 	char s_file_size[255];
 	long int file_size;
 	char *data;
+	char caixote[1];
+	char *file_name;
 	
+	FILE *f;
 	
 	limpa_buffer(tes_rqt, 255);
 	limpa_buffer(tes_aqt, 255);
-	limpa_buffer(s_quest_ID, 6);
+	limpa_buffer(s_quest_ID, 25);
+	limpa_buffer(s_file_size, 255);
+	limpa_buffer(deadline, 19);
 	
 	fd2 = tcp_connect(fd2);
 
@@ -269,24 +275,34 @@ void tcp_RQT(){
 	if( !strcmp("AQT ", tes_aqt)){
 		
 		printf("ESta mal!! QID pode ser 1 ou 10 ou 100. nao necessariamente 5 digitos!!\n");
-		tcp_read(s_quest_ID, 5);	/* Le o QID e grava */
-		s_quest_ID[5] = '\0';
+		tcp_read_alt(s_quest_ID);	/* Le o QID e grava */
 		questID = atoi(s_quest_ID);
 		printf("o QID : %d\n", questID);
-		tcp_read(s_quest_ID, 1);    /* le ' ' */
 		tcp_read(deadline, 18);		/*Le o time */
-		tcp_read(s_quest_ID, 1);	/* le ' ' */
+		puts(deadline);
+		tcp_read(caixote, 1);	/* le ' ' */
 		tcp_read_alt(s_file_size);	/*Le o tamanho do ficheiro*/
 		file_size = atoi(s_file_size);
-		printf(" o tamanho : %ld\n", file_size);
+		printf("O tamanho : %ld\n", file_size);
 		
-		tcp_read(s_quest_ID, 1);	/* le ' ' */
 
-		/*
+		
 		data = (char*)malloc(file_size*sizeof(char));
 		tcp_read(data, file_size);
+
+		sprintf(file_name, "%s.pdf", s_quest_ID); = ;
+		f = fopen(file_name, "w");
+		if(f==NULL){
+			printf("Error opening file!\n");
+			exit(1);
+		}
 		
-		*/
+		fprintf(f, "%s", data);
+
+		fclose(f);
+				
+
+		
 		tcp_read(s_quest_ID, 1); /* le '\n' */
 		
 	}

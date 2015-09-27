@@ -202,7 +202,6 @@ int conta_digitos_long_int(long int numero){
 
 long int get_file_size(){
 	FILE *fp_pdf;
-
 	long int new_pos;
 	
 	fp_pdf = fopen("aula2.pdf", "r+");
@@ -213,15 +212,11 @@ long int get_file_size(){
 	return new_pos;
 }
 
-char* get_dados(char* dados){
+char* get_dados(char* dados, int file_size){
 	FILE *fp_pdf;
 	
 	fp_pdf = fopen("aula2.pdf", "r+");
-	while(0 < fscanf(fp_pdf,"%s",dados)){
-		printf("Fazer: mandar linha a linha\n");
-		
-	}
-
+	fread(dados,file_size,file_size, fp_pdf);
 	fclose(fp_pdf);
 	return dados;
 }
@@ -262,13 +257,11 @@ void tcp_envia_AQT(){
 	tcp_write(" ", 1);
 	
 	
-	/*dados=(char*) malloc(file_size*sizeof(char));
+	dados=(char*)malloc(file_size*sizeof(char));
 	limpa_buffer(dados,file_size);
-	printf("TIrar o comment do get dados\n");
-	dados = get_dados(dados);
+	dados = get_dados(dados, file_size);
 	tcp_write(dados,file_size);
 	free(dados);
-	*/
 	
 	
 	tcp_write("\n", 1);
@@ -304,7 +297,6 @@ void tcp_trata_mensagem(){
 		tcp_read(tcp_input_buffer, 1);
 		
 		cria_instancia_QID(studID);
-		printf("tirar comment do tcp_envia_aqt\n");
 		tcp_envia_AQT();
 	}
 	else{

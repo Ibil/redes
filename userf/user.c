@@ -253,7 +253,7 @@ void tcp_RQT(){
 	long int file_size;
 	char *data;
 	char caixote[1];
-	char *file_name;
+	char file_name[30];
 	
 	FILE *f;
 	
@@ -262,6 +262,7 @@ void tcp_RQT(){
 	limpa_buffer(s_quest_ID, 25);
 	limpa_buffer(s_file_size, 255);
 	limpa_buffer(deadline, 19);
+	limpa_buffer(file_name, 30);
 	
 	fd2 = tcp_connect(fd2);
 
@@ -285,20 +286,19 @@ void tcp_RQT(){
 		file_size = atoi(s_file_size);
 		printf("O tamanho : %ld\n", file_size);
 		
-
+		limpa_buffer(s_quest_ID, 25);
 		
 		data = (char*)malloc(file_size*sizeof(char));
 		tcp_read(data, file_size);
-
-		sprintf(file_name, "%s.pdf", s_quest_ID); = ;
+		sprintf(s_quest_ID, "%d", questID);
+		sprintf(file_name, "%s.pdf", s_quest_ID);
 		f = fopen(file_name, "w");
 		if(f==NULL){
 			printf("Error opening file!\n");
 			exit(1);
 		}
-		
-		fprintf(f, "%s", data);
-
+		/*fprintf(f, "%s", data);*/
+		fwrite(data, sizeof(char), file_size, f);
 		fclose(f);
 				
 

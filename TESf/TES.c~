@@ -259,7 +259,7 @@ void tcp_envia_AQT(){
 	
 	dados=(char*)malloc(file_size*sizeof(char));
 	limpa_buffer(dados,file_size);
-	dados = get_dados(dados);
+	dados = get_dados(dados, file_size);
 	tcp_write(dados,file_size);
 	free(dados);
 	

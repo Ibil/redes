@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-char udp_hostname[] = "localhost";
 #define DEFAULT_PORT 58018
+char udp_hostname[] = "localhost";
 
 char ECSname[50];
 int ECSport;
@@ -33,6 +33,14 @@ char *ip_tes, *port_tes;
 char *tes_rqt;
 #define MAXBUFFSIZE 2580
 
+
+int conta_digitos_int(int numero){
+	int n_digitos;
+	for( n_digitos = 1; numero > 10; n_digitos++){
+		numero = numero/10;
+	}
+	return n_digitos;
+}
 
 int udp_open(int fd){
 	fd = socket(AF_INET, SOCK_DGRAM,0);
@@ -310,13 +318,20 @@ void tcp_RQT(){
 
 	tcp_close(fd2);
 
-	printf("Questionario %d.pdf recebido.\nTem ate %s para responder.", questID, deadline);
+	/*printf("Questionario %d.pdf recebido.\nTem ate %s para responder.\n", questID, deadline);*/
+	printf("received file %d.pdf\n", questID);
 }
 
 char* tcp_submit(char* input){
 	char answers[10];
 	char rqs_msg[255];
-	int i;	
+	char aqs_msg[255];
+	int i, qid_len, msg_len;	
+
+
+	limpa_buffer(answers, 10);
+	limpa_buffer(aqs_msg, 255);
+	limpa_buffer(rqs_msg, 255);
 
 	for(i=0;i<10;i=i+2){
 		scanf("%s", &answers[i]);
@@ -324,13 +339,20 @@ char* tcp_submit(char* input){
 	}
 
 	printf("%s\n", answers);
-	/*fd2 = tcp_connect(fd2);*/
+	fd2 = tcp_connect(fd2);
 
 	sprintf(rqs_msg, "RQS %d %d %s", SID, questID, answers);
-	printf("%s\n", rqs_msg);	
-	
+	printf("Mensagem a ser enviada: %s\n", rqs_msg);
 
-	/*tcp_write(rqs_msg, 26);*/
+	qid_len = conta_digitos_int(questID);
+	msg_len = qid_len + 21;
+
+	tcp_write(rqs_msg, msg_len);
+
+	/*LE AQS QID SCORE*/
+	tcp_read(aqs_msg, 4);
+	if( !strcmp("AQS ", aqs_msg)){}
+	
 	return "0";
 }
 

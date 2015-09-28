@@ -285,8 +285,8 @@ void tcp_RQT(){
 		
 		printf("ESta mal!! QID pode ser 1 ou 10 ou 100. nao necessariamente 5 digitos!!\n");
 		tcp_read_alt(s_quest_ID);	/* Le o QID e grava */
-		questID = atoi(s_quest_ID);
-		printf("o QID : %d\n", questID);
+		/*questID = atoi(s_quest_ID);*/ /*ESTA MAL*/
+		printf("o QID : %s\n", s_quest_ID);
 		tcp_read(deadline, 18);		/*Le o time */
 		puts(deadline);
 		tcp_read(caixote, 1);	/* le ' ' */
@@ -294,7 +294,7 @@ void tcp_RQT(){
 		file_size = atoi(s_file_size);
 		printf("O tamanho : %ld\n", file_size);
 		
-		limpa_buffer(s_quest_ID, 25);
+		/*limpa_buffer(s_quest_ID, 25);*/
 		
 		data = (char*)malloc(file_size*sizeof(char));
 		tcp_read(data, file_size);

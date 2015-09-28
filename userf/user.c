@@ -46,12 +46,12 @@ int udp_open(int fd){
 	fd = socket(AF_INET, SOCK_DGRAM,0);
 	
 	/* meter "localhost" para testes*/
-	hostptr=gethostbyname("localhost");
+	hostptr=gethostbyname(ECSname);
 	
 	memset((void*)&serveraddr, (int)'\0', sizeof(serveraddr));
 	serveraddr.sin_family=AF_INET;
 	serveraddr.sin_addr.s_addr=((struct in_addr*)(hostptr->h_addr_list[0]))->s_addr;
-	serveraddr.sin_port=htons((int)DEFAULT_PORT);
+	serveraddr.sin_port=htons((int)ECSport);
 	return fd;
 }
 
@@ -350,9 +350,9 @@ char* tcp_submit(char* input){
 	tcp_write(rqs_msg, msg_len);
 
 	/*LE AQS QID SCORE*/
-	tcp_read(aqs_msg, 4);
+	/*tcp_read(aqs_msg, 4);
 	if( !strcmp("AQS ", aqs_msg)){}
-	
+	*/
 	return "0";
 }
 

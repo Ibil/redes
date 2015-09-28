@@ -322,7 +322,7 @@ void tcp_RQT(){
 		
 		data = (char*)malloc(file_size*sizeof(char));
 		tcp_read(data, file_size);
-		sprintf(file_name, "%s.pdf", s_quest_ID);
+		sprintf(file_name, "%s.pdf", quest_ID);
 		f = fopen(file_name, "w");
 		if(f==NULL){
 			printf("Error opening file!\n");
@@ -333,7 +333,7 @@ void tcp_RQT(){
 				
 
 		
-		tcp_read(caixote, 1); /* le '\n' */
+		tcp_read(s_quest_ID, 1); /* le '\n' */
 		
 	}
 	else printf("houve merda\n");
@@ -341,7 +341,7 @@ void tcp_RQT(){
 	tcp_close(fd2);
 
 	/*printf("Questionario %d.pdf recebido.\nTem ate %s para responder.\n", questID, deadline);*/
-	printf("received file %s.pdf\n", s_quest_ID);
+	printf("received file %s.pdf\n", quest_ID);
 }
 
 char* tcp_submit(char* input){

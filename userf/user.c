@@ -291,36 +291,17 @@ void tcp_RQT(){
 	/* Le o <AQT QID TIME SIZE DATA\N> */
 	tcp_read(tes_aqt, 4);
 	if( !strcmp("AQT ", tes_aqt)){
-		
-		
-		tcp_read_alt(s_quest_ID);	/* Le o QID e grava */
+		tcp_read_alt(s_quest_ID);					/* Le o QID, ' ' e grava */
+		s_quest_ID[strlen(s_quest_ID)-1] = '\0'; 	/* substitui ' ' por '\0' */
 
-		s_quest_ID[strlen(s_quest_ID)-1] = '\0';
-		printf("S_QUEST_ID: %s, %d\n",s_quest_ID, strlen(s_quest_ID));
-		/*
-		printf("s_ques_id :%s\n",s_quest_ID);
-		qid_len = strlen(s_quest_ID) - 1;
-		printf("qid_len :%d\n",qid_len);
-		quest_ID= malloc(qid_len*sizeof(char));
-		limpa_buffer(quest_ID, qid_len);
-		
-		for(i = 0; i< qid_len; i++){
-			quest_ID[i] = s_quest_ID[i];
-			putchar(quest_ID[i]);
-		}
-		printf("o QID : %s\n", quest_ID);		
-		*/
-		
-		
-		tcp_read(deadline, 18);		/*Le o time */
+		tcp_read(deadline, 18);						/*Le o time */
 		puts(deadline);
-		tcp_read(caixote, 1);	/* le ' ' */
-		tcp_read_alt(s_file_size);	/*Le o tamanho do ficheiro*/
+		tcp_read(caixote, 1);						/* le ' ' */
+		
+		tcp_read_alt(s_file_size);					/*Le o tamanho do ficheiro*/
 		file_size = atoi(s_file_size);
-		printf("O tamanho : %ld\n", file_size);
 		
-		
-		data = (char*)malloc(file_size*sizeof(char));
+		data = (char*)malloc(file_size*sizeof(char)); /* le dados*/
 		tcp_read(data, file_size);
 		sprintf(file_name, "%s.pdf", s_quest_ID);
 		f = fopen(file_name, "w");

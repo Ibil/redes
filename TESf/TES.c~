@@ -236,8 +236,8 @@ void tcp_envia_AQT(int QID){
 	tcp_write("AQT ", 4);
 	
 	limpa_buffer(s_QID, 25);
-	sprintf(s_QID, "%s", "PUTA_DO_STOR");	
-	/*sprintf(s_QID,"%d", QID);*/
+	sprintf(s_QID,"%d", QID);
+	printf("################### %d\n\n", strlen(s_QID));
 
 	tcp_write(s_QID, strlen(s_QID));
 	tcp_write(" ", 1);

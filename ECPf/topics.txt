@@ -1,2 +1,2 @@
-redes localhost 59000
-bd localhost 59000
+introduction localhost 59000
+app_socket_prog localhost 59000

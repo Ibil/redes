@@ -208,7 +208,7 @@ long int get_file_size(){
 	FILE *fp_pdf;
 	long int new_pos;
 	
-	fp_pdf = fopen("aula2.pdf", "r+");
+	fp_pdf = fopen("1QF1.pdf", "r+");
 	fseek(fp_pdf, 0,SEEK_END);
 	new_pos = ftell(fp_pdf);
 
@@ -219,7 +219,7 @@ long int get_file_size(){
 char* get_dados(char* dados, int file_size){
 	FILE *fp_pdf;
 	
-	fp_pdf = fopen("aula2.pdf", "r+");
+	fp_pdf = fopen("1QF1.pdf", "r+");
 	fread(dados,sizeof(char),file_size, fp_pdf);
 	fclose(fp_pdf);
 	return dados;

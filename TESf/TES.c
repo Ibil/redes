@@ -256,7 +256,7 @@ long int get_file_size(){
 	char filename[20];
 	
 	limpa_buffer(filename, 20);
-	
+	printf("ola3\n");
 	sprintf(filename, "%dQF1.pdf", Tnn);
 	fp_pdf = fopen(filename, "r+");
 	fseek(fp_pdf, 0,SEEK_END);
@@ -339,7 +339,9 @@ void tcp_envia_AQT(int QID){
 	tcp_write(" ", 1);
 	
 	file_size = get_file_size();
+	printf("ola\n");
 	n_digitos = conta_digitos_long_int(file_size);
+	printf("ola\n");
 	s_size_of_data = (char*)malloc(n_digitos * sizeof(char));
 	sprintf(s_size_of_data, "%ld", file_size);
 	tcp_write( s_size_of_data, n_digitos);

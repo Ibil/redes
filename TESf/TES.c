@@ -16,11 +16,20 @@
 
 #define QID_SIZE 5
 
+#define QUEST_TIME 300
+
+int Tnn;
+char *Tname;
+
 int TESport = DEFAULT_TES_PORT;
 int ECPport = DEFAULT_ECP_PORT;
 char ECPname[50];
 
-int fd, newfd;
+struct hostent *udp_hostptr;
+struct sockaddr_in udp_serveraddr;
+int udp_addrlen;
+
+int fd, newfd, udp_fd;
 int nread, nwritten,nleft;
 struct sockaddr_in serveraddr, clientaddr;
 int addrlen, clientlen;
@@ -55,41 +64,39 @@ int cria_instancia_QID(int sid){
 
 
 /* ################   FUncoes UDP ################*/
-/*
-int udp_open_socket(int fd){
-	fd = socket(AF_INET, SOCK_DGRAM,0);
+
+int udp_open(int udp_fd){
+	udp_fd = socket(AF_INET, SOCK_DGRAM,0);
 	
-	memset((void*)&serveraddr, (int)'\0', sizeof(serveraddr));
-	serveraddr.sin_family=AF_INET;
-	serveraddr.sin_addr.s_addr=htonl(INADDR_ANY);
-	serveraddr.sin_port=htons((int)TESport);
+	/* meter "localhost" para testes*/
+	udp_hostptr=gethostbyname(ECPname);
 	
-	if (bind(fd,(struct sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
-		printf("Erro no bind : \n");
-		exit(1);
-	}
-	return fd;
+	memset((void*)&udp_serveraddr, (int)'\0', sizeof(udp_serveraddr));
+	udp_serveraddr.sin_family=AF_INET;
+	udp_serveraddr.sin_addr.s_addr=((struct in_addr*)(udp_hostptr->h_addr_list[0]))->s_addr;
+	udp_serveraddr.sin_port=htons((int)ECPport);
+	return udp_fd;
 }
 
-void udp_receive(int nbytestoreceive){
+void udp_receive(char* buffer, int nbytestoread){
 	printf("Pronto a receber\n");
-	recvfrom(fd, udp_buffer, nbytestoreceive*sizeof(char),0, (struct sockaddr*) &clientaddr, &addrlen);
-	printf("Mensagem recebida: %s\n", udp_buffer);
+	recvfrom(udp_fd, buffer, nbytestoread*sizeof(char),0, (struct sockaddr*) &udp_serveraddr, &udp_addrlen);
+	printf("Recebi resposta: %s", buffer);
 	return;
 }
 
-void udp_send(int nbytestosend){
-	printf("VOu enviar resposta: %s\n", udp_buffer);
-	sendto(fd,udp_buffer, nbytestosend*sizeof(char), 0, (struct sockaddr*)&clientaddr, addrlen);
-	printf("Resposta enviada \n");
+void udp_send(char* mensagem, int nbytestosend){
+	printf("VOu enviar a mensagem: %s", mensagem);
+	sendto(udp_fd,mensagem, nbytestosend*sizeof(char), 0, (struct sockaddr*)&udp_serveraddr, udp_addrlen);
+	printf("Mensagem enviada\n");
 	return;
 }
 
-void udp_close(int fd){
-	close(fd);
+void udp_close(int udp_fd){
+	close(udp_fd);
 	return;
 }
-*/
+
 /* ################   fim FUncoes UDP ################*/
 
 /* ################   FUncoes tcp ################*/
@@ -195,8 +202,12 @@ void limpa_buffer(char* buffer, int tamanho){
 
 char* verifica_respostas(char* vec_respostas){
 	FILE *fp_txt;
+	char filename[20];
 	
-	fp_txt = fopen("1QF1A", "r");
+	limpa_buffer(filename, 20);
+	
+	sprintf(filename, "%dQF1A.txt", Tnn);
+	fp_txt = fopen(filename, "r");
 	fread(vec_respostas,sizeof(char),9,fp_txt);
 	
 	fclose(fp_txt);
@@ -219,6 +230,7 @@ int verifica_score(char* input){
 		}
 		i+= 2;
 	}
+	free(respostas);
 	return score;
 }
 
@@ -241,8 +253,12 @@ int conta_digitos_long_int(long int numero){
 long int get_file_size(){
 	FILE *fp_pdf;
 	long int new_pos;
+	char filename[20];
 	
-	fp_pdf = fopen("1QF1.pdf", "r+");
+	limpa_buffer(filename, 20);
+	
+	sprintf(filename, "%dQF1.pdf", Tnn);
+	fp_pdf = fopen(filename, "r+");
 	fseek(fp_pdf, 0,SEEK_END);
 	new_pos = ftell(fp_pdf);
 
@@ -252,11 +268,39 @@ long int get_file_size(){
 
 char* get_dados(char* dados, int file_size){
 	FILE *fp_pdf;
+	char filename[20];
 	
-	fp_pdf = fopen("1QF1.pdf", "r+");
+	limpa_buffer(filename, 20);
+	
+	sprintf(filename, "%dQF1.pdf", Tnn);
+	fp_pdf = fopen(filename, "r+");
 	fread(dados,sizeof(char),file_size, fp_pdf);
 	fclose(fp_pdf);
 	return dados;
+}
+
+void informa_ECP(char* SID, char* QID, char* score){
+	char *lixo;
+	
+	lixo =(char*)malloc( (strlen(QID) + 5) * sizeof(char));
+
+	udp_fd = udp_open(fd);
+	udp_addrlen = sizeof(udp_serveraddr);
+	
+	udp_send("IQR ", 4);
+	udp_send(SID,5);
+	udp_send(" ",1);
+	udp_send(QID,strlen(QID));
+	udp_send(" ",1);
+	udp_send(Tname,strlen(Tname));
+	udp_send(" ",1);
+	udp_send(score,strlen(score));
+	udp_send("\n",1);
+	
+	udp_receive(lixo, strlen(lixo));
+	
+	udp_close(udp_fd);
+	return;
 }
 
 
@@ -299,6 +343,7 @@ void tcp_envia_AQT(int QID){
 	s_size_of_data = (char*)malloc(n_digitos * sizeof(char));
 	sprintf(s_size_of_data, "%ld", file_size);
 	tcp_write( s_size_of_data, n_digitos);
+	free(s_size_of_data);
 	tcp_write(" ", 1);
 	
 	dados=(char*)malloc(file_size*sizeof(char));
@@ -330,10 +375,15 @@ void tcp_trata_mensagem(){
 	char respostas[10];
 	int score;
 	
+	time_t t_entrega;
+	
+	char s_score[3];
+	
 	tcp_input_buffer = (char*)malloc(sizeof(char)* 10+ QID_SIZE + 12);
 	limpa_buffer(tcp_input_buffer, 27);
 	limpa_buffer(s_QID, 24);
 	limpa_buffer(respostas, 10);
+	limpa_buffer(s_score,3);
 	
 	tcp_read(tcp_input_buffer, 4);
 	printf("buffer: %s", tcp_input_buffer);
@@ -372,20 +422,34 @@ void tcp_trata_mensagem(){
 		s_QID[strlen(s_QID)-1] = '\0'; 	/* substitui ' ' do read_alt por '\0' */
 		QID = atoi(s_QID);
 		
-		/*calcula_pontuacao();*/
-		tcp_read(respostas,10);
-		score = verifica_score(respostas); 
+		/* Verifica o time*/
+		time(&t_entrega);
+		if( QUEST_TIME > difftime(t_entrega, db_quest_form[QID].t_registo) ){
+			/*calcula_pontuacao();*/
+			tcp_read(respostas,10);
+			score = verifica_score(respostas); 
+			printf("$$$$$$$$$$$$$$$$$$$$$ O score foi : %d\n\n", score);
+		}
+		else{
+			score = 101; /* isto = -1;*/
+		}
 		
-		printf("$$$$$$$$$$$$$$$$$$$$$ O score foi : %d\n\n", score);
-		/* falta verificar o time*/
-		
-		/*responde ao User*/
-		printf("Fazer o resto!!\n\n");
+		/*responde ao User: AQS SID SCORE\n */
+		tcp_write("AQS ", 4);
+		tcp_write(s_stud_ID,5);
+		tcp_write(" ", 1);
+		if( score != 101 ){
+			sprintf(s_score, "%d", score);
+		}
+		else{
+			strcpy(s_score, "-1");
+			
+		}
+		tcp_write(s_score, strlen(s_score));
+		tcp_write("\n", 1);
 		
 		/* informa o ECP*/
-		printf("Fazer o resto!!\n\n");
-		
-		
+		informa_ECP(&s_stud_ID[0], &s_QID[0], &s_score[0]);
 	}else{
 		printf("Pedido em TCP-RQS do user mal formatado\n");
 	}
@@ -407,17 +471,17 @@ void tcp_TES(){
 
 void trata_arg_cmb(int n_args, char **argv){
 	if(n_args == 1){
-		if(!strcmp(argv[1],"-p")){
-			TESport = atoi(argv[2]);
+		if(!strcmp(argv[3],"-p")){
+			TESport = atoi(argv[4]);
 			strcpy(ECPname, "localhost");
 			return;
 		}
-		if(!strcmp(argv[1],"-n")){
-			strcpy(ECPname,argv[2]);
+		if(!strcmp(argv[3],"-n")){
+			strcpy(ECPname,argv[4]);
 			return;
 		}
-		if(!strcmp(argv[1],"-e")){
-			ECPport= atoi(argv[2]);
+		if(!strcmp(argv[3],"-e")){
+			ECPport= atoi(argv[4]);
 			strcpy(ECPname, "localhost");
 			return;
 		}
@@ -428,20 +492,20 @@ void trata_arg_cmb(int n_args, char **argv){
 		return;
 	}
 	if(n_args == 2){
-		if(!strcmp(argv[1],"-p") && !strcmp(argv[3],"-n")){
-			TESport = atoi(argv[2]);
-			strcpy(ECPname,argv[4]);
+		if(!strcmp(argv[3],"-p") && !strcmp(argv[5],"-n")){
+			TESport = atoi(argv[4]);
+			strcpy(ECPname,argv[6]);
 			return;
 		}
-		if(!strcmp(argv[1],"-p") && !strcmp(argv[3],"-e")){
+		if(!strcmp(argv[3],"-p") && !strcmp(argv[5],"-e")){
 			strcpy(ECPname, "localhost");			
-			TESport = atoi(argv[2]);
-			ECPport= atoi(argv[4]);
+			TESport = atoi(argv[4]);
+			ECPport= atoi(argv[6]);
 			return;
 		}
-		if(!strcmp(argv[1],"-n") && !strcmp(argv[3],"-e")){
-			strcpy(ECPname,argv[2]);
-			ECPport= atoi(argv[4]);
+		if(!strcmp(argv[3],"-n") && !strcmp(argv[5],"-e")){
+			strcpy(ECPname,argv[4]);
+			ECPport= atoi(argv[6]);
 			return;
 		}
 		else{
@@ -456,21 +520,29 @@ void trata_arg_cmb(int n_args, char **argv){
 }
 
 int main(int argc, char **argv){
-	int ppid;	
+	int ppid;
+	if(argc < 3 || 
+		!strcmp(argv[1], "-p") || !strcmp(argv[1], "-n") || !strcmp(argv[1], "-e") ){
+		printf("Introduza o Topic_Number e Topic_name.\nConsulte os ficheiros TES_parametros.png e readme.txt\n");
+		exit(1);
+	}
+	Tnn = atoi(argv[1]);
+	Tname = (char*)malloc(strlen(argv[2]) * sizeof(char));
+	strcpy(Tname,argv[2]);
 	switch(argc){
-		case 1 : strcpy(ECPname, "localhost");
+		case 3 : strcpy(ECPname, "localhost");
 			 break;
-		case 3 : trata_arg_cmb(1,argv);
+		case 5 : trata_arg_cmb(1,argv);
 		         break;
-		case 5 : trata_arg_cmb(2,argv);
+		case 7 : trata_arg_cmb(2,argv);
 			 break;
-		case 7 : TESport = atoi(argv[2]);
-			 strcpy(ECPname, argv[4]);
-			 ECPport = atoi(argv[6]);
+		case 9 : TESport = atoi(argv[4]);
+			 strcpy(ECPname, argv[6]);
+			 ECPport = atoi(argv[8]);
 			 break;
 		default:printf("Erro no número de argumentos");
 	}
-	printf("TESport: %d\t ECPname: %s\t ECPport: %d\n", TESport, ECPname, ECPport);
+	printf("Tnn: %d\t Tname: %s\t TESport: %d\t ECPname: %s\t ECPport: %d\n", Tnn, Tname, TESport, ECPname, ECPport);
 	ppid = fork();
 	if (ppid < 0){
 		printf("Erro a fazer o fork para SSs\n");

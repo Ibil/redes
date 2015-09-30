@@ -5,4 +5,5 @@ ECP: -p porta
 		stats.txt : por fazer
 		
 		
-TES: -p TESport -n ECPname -e ECPport
+TES: Tnn Topic_name -p TESport -n ECPname -e ECPport
+		guarda questionarios em pdf

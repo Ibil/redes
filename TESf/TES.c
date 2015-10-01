@@ -162,6 +162,7 @@ void tcp_read_alt(char *msg){
 		ptr_temp+=nread;
 	}
 	while( (*(ptr_temp-1))!=' ' );
+	*(ptr_temp-1)=0;
 	
 	puts("sair do read alt");
 	printf("A resposta lida foi: %s\n", msg);
@@ -281,13 +282,16 @@ char* get_dados(char* dados, int file_size){
 
 void informa_ECP(char* SID, char* QID, char* score){
 	char *lixo;
-	
+	int tamanho = 4 + strlen(SID) + 1 + strlen(QID) + 1 + strlen(Tname) + 1 + strlen(score) + 1;
+	char resposta[tamanho];
 	lixo =(char*)malloc( (strlen(QID) + 5) * sizeof(char));
 
-	udp_fd = udp_open(fd);
+	udp_fd = udp_open(udp_fd);
 	udp_addrlen = sizeof(udp_serveraddr);
 	
-	udp_send("IQR ", 4);
+	sprintf(resposta, "IQR %s %s %s %s\n", SID, QID, Tname, score);
+	udp_send(resposta, tamanho);
+	/*udp_send("IQR ", 4);
 	udp_send(SID,5);
 	udp_send(" ",1);
 	udp_send(QID,strlen(QID));
@@ -295,7 +299,7 @@ void informa_ECP(char* SID, char* QID, char* score){
 	udp_send(Tname,strlen(Tname));
 	udp_send(" ",1);
 	udp_send(score,strlen(score));
-	udp_send("\n",1);
+	udp_send("\n",1);*/
 	
 	udp_receive(lixo, strlen(lixo));
 	
@@ -421,7 +425,7 @@ void tcp_trata_mensagem(){
 		
 		/* LE o QID*/
 		tcp_read_alt(s_QID);
-		s_QID[strlen(s_QID)-1] = '\0'; 	/* substitui ' ' do read_alt por '\0' */
+		/*s_QID[strlen(s_QID)-1] = '\0';*/ 	/* substitui ' ' do read_alt por '\0' */
 		QID = atoi(s_QID);
 		
 		/* Verifica o time*/
@@ -436,22 +440,23 @@ void tcp_trata_mensagem(){
 			score = 101; /* isto = -1;*/
 		}
 		
-		/*responde ao User: AQS SID SCORE\n */
+		/*responde ao User: AQS QID SCORE\n */
 		tcp_write("AQS ", 4);
-		tcp_write(s_stud_ID,5);
+		tcp_write(s_QID,5);
 		tcp_write(" ", 1);
 		if( score != 101 ){
 			sprintf(s_score, "%d", score);
+			tcp_write(s_score, strlen(s_score));
+			tcp_write("\n", 1);
+			informa_ECP(&s_stud_ID[0], &s_QID[0], &s_score[0]); /* informa o ECP*/
 		}
 		else{
 			strcpy(s_score, "-1");
-			
+			tcp_write(s_score, strlen(s_score));
+			tcp_write("\n", 1);
 		}
-		tcp_write(s_score, strlen(s_score));
-		tcp_write("\n", 1);
 		
-		/* informa o ECP*/
-		informa_ECP(&s_stud_ID[0], &s_QID[0], &s_score[0]);
+		
 	}else{
 		printf("Pedido em TCP-RQS do user mal formatado\n");
 	}

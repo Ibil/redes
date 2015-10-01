@@ -14,7 +14,8 @@ char udp_hostname[] = "localhost";
 
 char ECSname[50];
 int ECSport;
-int SID, questID;
+int SID;
+char s_quest_ID[25];
 char *terminal_input;
 
 int fd, fd2;
@@ -102,7 +103,7 @@ void tcp_write(char* msg, int nbytestowrite){
 	nleft=nbytestowrite;
    printf("vou enviar mensagem: %s\n", ptr);
 	while(nleft > 0)	{
-		if( (nwritten=write(fd,msg,nleft)) == -1){
+		if( (nwritten=write(fd,ptr,nleft)) == -1){
 			printf("erro no write\n");
 			exit(1);
 		}
@@ -148,7 +149,28 @@ void tcp_read_alt(char *msg){
 		ptr_temp+=nread;
 	}
 	while( (*(ptr_temp-1))!=' ' );
+	*(ptr_temp-1)=0;
+	puts("sair do read alt");
+	printf("A resposta lida foi: %s\n", msg);
+	return;
+}
+
+void tcp_read_alt_n(char *msg){		/*=================ISTO E MUITO FEIO===============*/
+	char *ptr_temp;
 	
+	printf("Vou ler a mensagem\n");
+	ptr_temp=&msg[0];
+	
+	
+	do{
+		if((nread = read(fd2,ptr_temp,1)) == -1){
+			printf("Erro a ler a mensagem\n");
+			exit(1);
+		}
+		printf("O char : %c\n", (*ptr_temp));
+		ptr_temp+=nread;
+	}
+	while( (*(ptr_temp-1))!='\n' );
 	puts("sair do read alt");
 	printf("A resposta lida foi: %s\n", msg);
 	return;
@@ -229,13 +251,8 @@ void udp_request(char* input){
 	limpa_buffer(buffer_tn, MAXBUFFSIZE);
 	udp_receive(MAXBUFFSIZE);
 
-	ptr = strtok(buffer_tn, " ");
-	printf("--------------------------------%s-----------------\n", ptr);
-	if(!strcmp("EOF\n",ptr)){
-		printf("mensgaem recebida mal formatada\n");
-		exit(-1);
-	}
-
+	strtok(buffer_tn, " ");
+	
 	ptr = strtok(NULL, " ");
 	ip_tes = (char*)malloc( strlen(ptr) * sizeof(char) );
 	strcpy(ip_tes,ptr);
@@ -259,19 +276,15 @@ void tcp_RQT(){
 	char tes_rqt[255];
 	char tes_aqt[255];
 	
-	char s_quest_ID[25];
-	char *quest_ID;
+	/*char s_quest_ID[25];*/
 	char deadline[19];
 	
-	int qid_len;
-
 	char s_file_size[255];
 	long int file_size;
 	char *data;
 	char caixote[1];
 	char file_name[30];
-		
-	int i;
+	
 	FILE *f;
 	
 	limpa_buffer(tes_rqt, 255);
@@ -291,24 +304,30 @@ void tcp_RQT(){
 	/* Le o <AQT QID TIME SIZE DATA\N> */
 	tcp_read(tes_aqt, 4);
 	if( !strcmp("AQT ", tes_aqt)){
-		tcp_read_alt(s_quest_ID);					/* Le o QID, ' ' e grava */
-		s_quest_ID[strlen(s_quest_ID)-1] = '\0'; 	/* substitui ' ' por '\0' */
-
-		tcp_read(deadline, 18);						/*Le o time */
+		
+		printf("ESta mal!! QID pode ser 1 ou 10 ou 100. nao necessariamente 5 digitos!!\n");
+		tcp_read_alt(s_quest_ID);	/* Le o QID e grava */
+		/*questID = atoi(s_quest_ID);*/ /*ESTA MAL*/
+		printf("o QID : %s\n", s_quest_ID);
+		tcp_read(deadline, 18);		/*Le o time */
 		puts(deadline);
-		tcp_read(caixote, 1);						/* le ' ' */
-		
-		tcp_read_alt(s_file_size);					/*Le o tamanho do ficheiro*/
+		tcp_read(caixote, 1);	/* le ' ' */
+		tcp_read_alt(s_file_size);	/*Le o tamanho do ficheiro*/
 		file_size = atoi(s_file_size);
+		printf("O tamanho : %ld\n", file_size);
 		
-		data = (char*)malloc(file_size*sizeof(char)); /* le dados*/
+		/*limpa_buffer(s_quest_ID, 25);*/
+		
+		data = (char*)malloc(file_size*sizeof(char));
 		tcp_read(data, file_size);
+		/*sprintf(s_quest_ID, "%d", questID);*/
 		sprintf(file_name, "%s.pdf", s_quest_ID);
 		f = fopen(file_name, "w");
 		if(f==NULL){
 			printf("Error opening file!\n");
 			exit(1);
 		}
+		/*fprintf(f, "%s", data);*/
 		fwrite(data, sizeof(char), file_size, f);
 		fclose(f);
 				
@@ -319,19 +338,24 @@ void tcp_RQT(){
 	}
 	else printf("houve merda\n");
 
-	tcp_close(fd2);
 
 	/*printf("Questionario %d.pdf recebido.\nTem ate %s para responder.\n", questID, deadline);*/
 	printf("received file %s.pdf\n", s_quest_ID);
 }
 
-char* tcp_submit(char* input){
+void tcp_submit(char* input){
 	char answers[10];
 	char rqs_msg[255];
 	char aqs_msg[255];
-	int i, qid_len, msg_len;	
+	char s_quest_ID_recvd[25];
+	char s_score[4];
+	char s_SID[5];
+	char temp_qid[25];
+	int i, qid_len, msg_len, score;	
 
-
+	limpa_buffer(temp_qid, 25);
+	limpa_buffer(s_score, 4);
+	limpa_buffer(s_quest_ID_recvd, 25);
 	limpa_buffer(answers, 10);
 	limpa_buffer(aqs_msg, 255);
 	limpa_buffer(rqs_msg, 255);
@@ -340,23 +364,44 @@ char* tcp_submit(char* input){
 		scanf("%s", &answers[i]);
 		answers[i+1]=' ';
 	}
+	answers[9] = '\0';
 
 	printf("%s\n", answers);
-	fd2 = tcp_connect(fd2);
 
-	sprintf(rqs_msg, "RQS %d %d %s", SID, questID, answers);
+	sprintf(rqs_msg, "RQS %d %s %s", SID, s_quest_ID, answers);
 	printf("Mensagem a ser enviada: %s\n", rqs_msg);
 
-	qid_len = conta_digitos_int(questID);
-	msg_len = qid_len + 21;
+	qid_len = strlen(s_quest_ID);
+	sprintf(s_SID, "%d", SID);
+	sprintf(temp_qid, "%s ", s_quest_ID);
+	/*msg_len = qid_len + 21;
 
-	tcp_write(rqs_msg, msg_len);
+	tcp_write(rqs_msg, msg_len);*/
+	tcp_write("RQS ", 4);
+	tcp_write(s_SID, 5);
+	tcp_write(" ", 1);
+	tcp_write(temp_qid, qid_len+1);
+	tcp_write(answers, 10);
+	
 
 	/*LE AQS QID SCORE*/
-	/*tcp_read(aqs_msg, 4);
-	if( !strcmp("AQS ", aqs_msg)){}
-	*/
-	return "0";
+	tcp_read(aqs_msg, 4);
+	if( !strcmp("AQS ", aqs_msg)){
+		tcp_read_alt(s_quest_ID_recvd);
+		tcp_read_alt_n(s_score);
+		if(s_score[0] == '-'){
+			printf("Tempo limite de submissao de resposta excedido.\n");
+			return;
+		}
+		else{
+			score = atoi(s_score);
+			printf("Obteve %d%% de pontuacao no questionario %s.\n", score, s_quest_ID);
+		}
+	}
+	else printf("houve shite no submit\n");
+	
+	tcp_close(fd2);
+	return;
 }
 
 void trata_args(char* arg1, char* arg2){
@@ -405,7 +450,7 @@ int main(int argc, char **argv){
 			tcp_RQT();
 		}
 		if(!strcmp(terminal_input, "submit")){
-			printf("%s\n", tcp_submit(terminal_input));
+			tcp_submit(terminal_input);
 		}
 		if(!strcmp(terminal_input, "exit")){
 			break;

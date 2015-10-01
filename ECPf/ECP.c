@@ -26,6 +26,14 @@ extern int errno;
 int max_top;
 
 
+void limpa_buffer(char* buffer, int tamanho){
+	int i;
+	for(i=0;i<tamanho;i++){
+		buffer[i] = '\0';
+	}
+	return;
+}
+
 int udp_open_socket(int fd){
 	fd = socket(AF_INET, SOCK_DGRAM,0);
 	
@@ -202,8 +210,82 @@ void copia_TES(){
 	return;
 }
 
+void receive_Stats(){
+	char *s_ID;
+	char *q_ID;
+	char *topic_name;
+	char *s_score;
+	char awi[29];
+	int i, j, score;
+	/*char car;*/
+	char *caixote;
+
+	/*limpa_buffer(s_ID, 6);
+	limpa_buffer(q_ID, 24);
+	limpa_buffer(topic_name, 50);
+	limpa_buffer(awi, 29);*/
+	
+	/*printf("entrou no receive_stats\n");
+	for(i=0; i<5; i++){  /*TRATA SID
+		s_ID[i] = udp_buffer[4+i];
+	}
+	printf("SID: %s, strlen: %d\n", s_ID, strlen(s_ID));
+	i=i+5;		/*COMER O ESPACO E DESPREZAR O "IQR "
+	car = udp_buffer[i];
+	j = 0;
+	while(car != ' '){ /*TRATA QID
+		q_ID[j]=car;
+		printf("car: %c\n", car);
+		i++;
+		j++;
+		printf("udp_buffer[%d]: %c\n", i, udp_buffer[i]);
+		car = udp_buffer[i];
+	}
+	i++;
+
+	printf("QID: %s\n", q_ID);
+
+	car = udp_buffer[i];
+	j=0;
+	while(car != ' '){ /*TRATA topic_name
+		topic_name[j]=car;
+		i++;
+		j++;
+		car = udp_buffer[i];
+	}
+	i++;
+
+	printf("topic_name: %s\n", topic_name);
+
+	car = udp_buffer[i];
+	j=0;
+	while(car != '\n'){ /*TRATA score
+		s_score[j]=car;
+		i++;
+		j++;
+		car = udp_buffer[i];
+	}
+	score = atoi(s_score);
+
+	printf("score: %d\n", score);
+	/*FALTA POR A INFORMACAO EM ALGUM SITIO, POR ENQUANTO VOU IMPRIMIR
+	printf("strlen:%d, s_ID: %s\n", strlen(s_ID), s_ID);
+	s_ID[5]='\0';*/
+	caixote = strtok(udp_buffer, " ");
+	s_ID = strtok(NULL, " ");
+	q_ID = strtok(NULL, " ");
+	topic_name = strtok(NULL, " ");
+	s_score = strtok(NULL, " ");
+	score = atoi(s_score);
+	printf("Estudante %s respondeu ao questionario %s - %s e teve %d%% de pontuacao.\n", s_ID, q_ID, topic_name, score);
+
+	sprintf(awi, "AWI %s\n", q_ID);
+	limpa_buffer(udp_buffer, 250);
+	strcpy(udp_buffer, awi);
+}
 
 void udp_trata_mensagem(){
+	/*TRATA DO TER*/
 	if( udp_buffer[0] == 'T' &&
 		udp_buffer[1] == 'E' &&
 		udp_buffer[2] == 'R' &&
@@ -212,23 +294,23 @@ void udp_trata_mensagem(){
 		printf("Mensagem entrou no ter\n");
 		copia_TES();
 		return;
-	}	
+	}
+	/*TRATA DO TQR*/	
 	if(!strcmp(udp_buffer,"TQR\n")){
 		strcpy(udp_buffer,"AWT ");
 		copia_Tnames();
 	}
-	else{
+	/*TRATA DO IQR SID QID topic_name score*/
+	if(udp_buffer[0] == 'I' &&
+	   udp_buffer[1] == 'Q' &&
+	   udp_buffer[2] == 'R' &&
+	   udp_buffer[3] == ' '){
+		receive_Stats();
+	}
+	/*else{
 		strcpy(udp_buffer, "ERR\n\0");
-	}
+	}*/
 	
-	return;
-}
-
-void limpa_buffer(char* buffer, int tamanho){
-	int i;
-	for(i=0;i<tamanho;i++){
-		buffer[i] = '\0';
-	}
 	return;
 }
 
@@ -250,6 +332,7 @@ int main(int argc, char **argv){
 		addrlen = sizeof(clientaddr);
 	
 		udp_receive(250);
+		printf("%s", udp_buffer);
 		udp_trata_mensagem();
 		udp_send(strlen(udp_buffer));
 	

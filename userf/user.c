@@ -338,7 +338,7 @@ void tcp_RQT(){
 	}
 	else printf("houve merda\n");
 
-
+	tcp_close(fd2);
 	/*printf("Questionario %d.pdf recebido.\nTem ate %s para responder.\n", questID, deadline);*/
 	printf("received file %s.pdf\n", s_quest_ID);
 }
@@ -360,11 +360,13 @@ void tcp_submit(char* input){
 	limpa_buffer(aqs_msg, 255);
 	limpa_buffer(rqs_msg, 255);
 
+	fd2 = tcp_connect(fd2);
+
 	for(i=0;i<10;i=i+2){
 		scanf("%s", &answers[i]);
 		answers[i+1]=' ';
 	}
-	answers[9] = '\0';
+	answers[9] = '\n';
 
 	printf("%s\n", answers);
 
@@ -373,14 +375,15 @@ void tcp_submit(char* input){
 
 	qid_len = strlen(s_quest_ID);
 	sprintf(s_SID, "%d", SID);
-	sprintf(temp_qid, "%s ", s_quest_ID);
+	sprintf(temp_qid, "%s", s_quest_ID);
 	/*msg_len = qid_len + 21;
 
 	tcp_write(rqs_msg, msg_len);*/
 	tcp_write("RQS ", 4);
 	tcp_write(s_SID, 5);
 	tcp_write(" ", 1);
-	tcp_write(temp_qid, qid_len+1);
+	tcp_write(temp_qid, qid_len);
+	tcp_write(" ", 1);
 	tcp_write(answers, 10);
 	
 

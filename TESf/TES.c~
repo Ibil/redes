@@ -440,7 +440,6 @@ void tcp_trata_mensagem(){
 		/*responde ao User: AQS QID SCORE\n */
 		tcp_write("AQS ", 4);
 		tcp_write(s_QID,5);
-		printf("##### o QID : %s\n\n", s_QID);
 		tcp_write(" ", 1);
 		if( score != 101 ){
 			sprintf(s_score, "%d", score);

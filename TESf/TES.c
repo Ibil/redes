@@ -573,10 +573,18 @@ int main(int argc, char **argv){
 	tcp_set_socket();
 	while(1){
 		tcp_accept_connection();
-
-		tcp_trata_mensagem();
-	
-		tcp_close_connection();
+		if (fork() == 0) {
+			/* o filho vai fechar o socket para so tratar o pedido recebido*/
+			tcp_close_socket();
+			tcp_trata_mensagem();
+			tcp_close_connection();
+			exit(0);
+		}
+		else {
+			/* O pai vai aceitar uma ligacao nova*/
+			tcp_close_connection();
+			continue;
+		}
 	}
 	tcp_close_socket();
 	

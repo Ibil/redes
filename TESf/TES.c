@@ -14,16 +14,17 @@
 #define DEFAULT_TES_PORT 59000
 #define DEFAULT_ECP_PORT 58018
 
-#define QID_SIZE 5
+#define QID_SIZE 24
 
 #define QUEST_TIME 300
 
 int Tnn;
 char *Tname;
+int Tname_size;
 
 int TESport = DEFAULT_TES_PORT;
-int ECPport = DEFAULT_ECP_PORT;
 char ECPname[50];
+int ECPport = DEFAULT_ECP_PORT;
 
 struct hostent *udp_hostptr;
 struct sockaddr_in udp_serveraddr;
@@ -34,29 +35,7 @@ int nread, nwritten,nleft;
 struct sockaddr_in serveraddr, clientaddr;
 int addrlen, clientlen;
 
-char* tcp_input_buffer;
-char *ptr;
-
 extern int errno;
-
-static int QID_index = 0;
-
-/* EStrutura do TES com resultados*/
-
-typedef struct{
-	int QID;
-	time_t t_registo;
-}quest_form;
-
-quest_form db_quest_form[1000];
-
-int cria_instancia_QID(int sid){
-	db_quest_form[QID_index].QID = QID_index;
-	QID_index++;
-	return QID_index - 1;
-}
-
-/* fim de estrutura*/
 
 
 /* ################   FUncoes UDP ################*/
@@ -64,7 +43,6 @@ int cria_instancia_QID(int sid){
 int udp_open(int udp_fd){
 	udp_fd = socket(AF_INET, SOCK_DGRAM,0);
 	
-	/* meter "localhost" para testes*/
 	udp_hostptr=gethostbyname(ECPname);
 	
 	memset((void*)&udp_serveraddr, (int)'\0', sizeof(udp_serveraddr));
@@ -170,6 +148,7 @@ void tcp_read_alt(char *msg){
 }
 
 void tcp_write(char* buffer, int nbytestowrite){
+	char *ptr;
 	printf("vou enviar a resposta: %s\n", buffer);
 	ptr = buffer;
 	nleft = nbytestowrite;
@@ -263,7 +242,6 @@ long int get_file_size(){
 	char filename[20];
 	
 	limpa_buffer(filename, 20);
-	printf("ola3\n");
 	sprintf(filename, "%dQF1.pdf", Tnn);
 	fp_pdf = fopen(filename, "r+");
 	fseek(fp_pdf, 0,SEEK_END);
@@ -288,25 +266,23 @@ char* get_dados(char* dados, int file_size){
 
 void informa_ECP(char* SID, char* QID, char* score){
 	char *lixo;
-	int tamanho = 4 + strlen(SID) + 1 + strlen(QID) + 1 + strlen(Tname) + 1 + strlen(score) + 1;
+	int tamanho = 4 + strlen(SID) + 1 + QID_SIZE + 1 + Tname_size + 1 + strlen(score) + 1;
 	char resposta[tamanho];
+	
+	limpa_buffer(resposta,tamanho);
+	
+	printf("o TName tem size: %d ; %d e tem la : %s\n",strlen(Tname), Tname_size, Tname);
+	
+	printf("%s %s %s %s\n", SID, QID, Tname, score);
+	
 	lixo =(char*)malloc( (strlen(QID) + 5) * sizeof(char));
 
 	udp_fd = udp_open(udp_fd);
 	udp_addrlen = sizeof(udp_serveraddr);
 	
 	sprintf(resposta, "IQR %s %s %s %s\n", SID, QID, Tname, score);
+	printf("A comunicacao com o ECP: %s\n", resposta);
 	udp_send(resposta, tamanho);
-	/*udp_send("IQR ", 4);
-	udp_send(SID,5);
-	udp_send(" ",1);
-	udp_send(QID,strlen(QID));
-	udp_send(" ",1);
-	udp_send(Tname,strlen(Tname));
-	udp_send(" ",1);
-	udp_send(score,strlen(score));
-	udp_send("\n",1);*/
-	
 	udp_receive(lixo, strlen(lixo));
 	
 	udp_close(udp_fd);
@@ -314,9 +290,9 @@ void informa_ECP(char* SID, char* QID, char* score){
 }
 
 
-void tcp_envia_AQT(int QID){
+void tcp_envia_AQT(char* s_SID, char* s_QID){
 	long int file_size;
-	char s_QID[25];
+	time_t t_registo;
 	struct tm tm_registo;
 	char aqt_time[18];
 	char *dados;
@@ -328,22 +304,22 @@ void tcp_envia_AQT(int QID){
     	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
  	};
 	
-	limpa_buffer(s_QID, 25);
 	
 	tcp_write("AQT ", 4);
 	
-	sprintf(s_QID,"%d", QID);
-	tcp_write(s_QID, strlen(s_QID));
-	tcp_write(" ", 1);
-	
 	/*guarda tempo actual*/
-	time( &(db_quest_form[QID].t_registo) );  
+	time(&t_registo);  
 	/* copia conteudo para outra estrutura de modo a imprimir */
-  	tm_registo = *localtime( &(db_quest_form[QID].t_registo) );
-  	
+  	tm_registo = *localtime(&t_registo);
+  	/*guarda o tempo de registo*/
   	sprintf(aqt_time, "%.2d%.3s%.4d_%.2d:%.2d:%.2d",
     	tm_registo.tm_mday, mon_name[tm_registo.tm_mon], 1900 + tm_registo.tm_year,
    		tm_registo.tm_hour, tm_registo.tm_min, tm_registo.tm_sec);
+   		
+	/* COncatena o SID com o tempo de registo para obeter o QID e envia-o*/
+	sprintf(s_QID,"%s_%s", s_SID, aqt_time);
+	tcp_write(s_QID, QID_SIZE);
+	tcp_write(" ", 1);
 	
 	tcp_write(aqt_time, 18);
 	tcp_write(" ", 1);
@@ -370,65 +346,122 @@ void tcp_envia_AQT(int QID){
 
 
 void tcp_trata_mensagem(){
-	/* 	
-	-(INPUT)->  RQT SID\n  
-	<-(OUTPUT)- AQT QID time size data\n 
-				time: DDMMMYYYY_HH:MM:SS
-					  09JAN2015_20:00:00
-	
-	-(INPUT)->  RQS SID V1 V2 V3 V4 V5\n
-	<-(OUTPUT)- AQS QID score\n	
-	*/
-	
-	int studID;
-	char s_stud_ID[5];
-	int QID;
-	char s_QID[24];
+	char* tcp_input_buffer;	
+	char s_stud_ID[6];
+	time_t t_registo, t_entrega;
+	struct tm tm_registo;
+	char s_QID[25];
 	char respostas[10];
-	int score;
-	
-	time_t t_entrega;
-	
+	int score, i;
 	char s_score[3];
 	
+	static const char mon_name[][4] = {
+    	"JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+    	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+ 	};
+	
+	char DD[3]; char MMM[4]; char YYYY[5];
+	char HH[3]; char MM[3];  char SS[3];
+	
+
 	tcp_input_buffer = (char*)malloc(sizeof(char)* 10+ QID_SIZE + 12);
-	limpa_buffer(tcp_input_buffer, 27);
-	limpa_buffer(s_QID, 24);
+	
+	limpa_buffer(tcp_input_buffer, 46);
+	limpa_buffer(s_QID, QID_SIZE + 1);
 	limpa_buffer(respostas, 10);
 	limpa_buffer(s_score,3);
+	limpa_buffer(s_stud_ID,6);
+	limpa_buffer(DD,3);
+	limpa_buffer(MMM,4);
+	limpa_buffer(YYYY,5);
+	limpa_buffer(HH, 3);
+	limpa_buffer(MM, 3);
+	limpa_buffer(SS,3);
 	
 	tcp_read(tcp_input_buffer, 4);
-	printf("buffer: %s", tcp_input_buffer);
+	printf("buffer: %s\n", tcp_input_buffer);
 	if( !strcmp("RQT ", tcp_input_buffer)){
-		/* Le o SID e grava */
 		printf("Li o RQT' '\n");
+		/* 	
+		-(INPUT)->  RQT SID\n  
+		<-(OUTPUT)- AQT QID time size data\n 
+					time: DDMMMYYYY_HH:MM:SS
+						  09JAN2015_20:00:00
+		*/
+		/* Le o SID e grava */
 		tcp_read(s_stud_ID, 5);
-		studID =atoi(s_stud_ID);
 		/* come o '\n'*/
 		tcp_read(tcp_input_buffer, 1);
-		
-		QID = cria_instancia_QID(studID);
-		tcp_envia_AQT(QID);
+		tcp_envia_AQT(&s_stud_ID[0], &s_QID[0]);
 	}
-	/*Recebe RQS */
 	else if( !strcmp("RQS ", tcp_input_buffer)){
+		/*
+		-(INPUT)->  RQS SID V1 V2 V3 V4 V5\n
+		<-(OUTPUT)- AQS QID score\n	
+		*/
 		printf("LI o RQS' '\n");
 		
-		/* Le o SID*/
-		tcp_read(s_stud_ID, 5);
-		studID =atoi(s_stud_ID);
-		/* le o espaco*/
+		tcp_read(s_stud_ID, 5); /* Le o SID*/
 		tcp_read(tcp_input_buffer, 1);
 		
-		/* LE o QID*/
-		tcp_read_alt(s_QID);
-		/*s_QID[strlen(s_QID)-1] = '\0';*/ 	/* substitui ' ' do read_alt por '\0' */
-		QID = atoi(s_QID);
 		
+		tcp_read_alt(s_QID);	/* LE o QID*/
+		/*s_QID[strlen(s_QID)-1] = '\0';*/ 	/* substitui ' ' do read_alt por '\0' */
+		
+		/* obtem t_registo a partir do QID */
+			/*guarda tempo actual*/
+		time(&t_registo);  
+			/* copia conteudo para outra estrutura de modo a imprimir */
+	  	tm_registo = *localtime(&t_registo);
+	  		/*guarda o tempo de registo*/
+	  		
+  			
+  		DD[0] = s_QID[6]; DD[1] = s_QID[7];
+  		tm_registo.tm_mday = atoi(DD);
+  		
+  		
+  		
+  		/* Copia o nome do mes ; vai a procura do seu indice para atribuir ao tm_registo*/
+  		MMM[0] = s_QID[8]; MMM[1] = s_QID[9]; MMM[2] = s_QID[10];
+  		
+  		for( i = 0; strcmp(MMM, mon_name[i])&&(i< 12) ; i++);
+  		tm_registo.tm_mon = i;
+  		printf("O mes: %d %s\n", tm_registo.tm_mon, mon_name[tm_registo.tm_mon]);
+  		
+  		
+  		YYYY[0] = s_QID[11]; YYYY[1] = s_QID[12];YYYY[2] = s_QID[13];YYYY[3] = s_QID[14];
+  		tm_registo.tm_year = atoi(YYYY) - 1900;
+  		printf("o ano: %d\n", tm_registo.tm_year);
+  		
+  		
+  		HH[0] = s_QID[16]; HH[1] = s_QID[17];
+  		tm_registo.tm_hour = atoi(HH);
+  		printf("A hora: %d\n", tm_registo.tm_hour);
+  		
+  		MM[0] = s_QID[19]; MM[1] = s_QID[20];
+  		tm_registo.tm_min = atoi(MM);
+  		
+  		
+  		printf(" ## antes dos ss DEBUG ##%.2d%.3s%.4d_%.2d:%.2d:%.2d\n",
+    	tm_registo.tm_mday, mon_name[tm_registo.tm_mon], 1900 + tm_registo.tm_year,
+   		tm_registo.tm_hour, tm_registo.tm_min, tm_registo.tm_sec);
+  		
+  		SS[0] = s_QID[22]; SS[1] = s_QID[23];
+  		printf("O atoi dos SS : %d  ja que S_qid= %c %c\n", atoi(SS), s_QID[22],s_QID[23]);
+  		tm_registo.tm_sec = atoi(SS);		
+	
+		printf(" ## DEBUG ##%.2d%.3s%.4d_%.2d:%.2d:%.2d\n",
+    	tm_registo.tm_mday, mon_name[tm_registo.tm_mon], 1900 + tm_registo.tm_year,
+   		tm_registo.tm_hour, tm_registo.tm_min, tm_registo.tm_sec);
 		/* Verifica o time*/
 		time(&t_entrega);
-		if( QUEST_TIME > difftime(t_entrega, db_quest_form[QID].t_registo) ){
-			/*calcula_pontuacao();*/
+		
+		printf(" ## DEBUG ##%.2d%.3s%.4d_%.2d:%.2d:%.2d\n",
+    	tm_registo.tm_mday, mon_name[tm_registo.tm_mon], 1900 + tm_registo.tm_year,
+   		tm_registo.tm_hour, tm_registo.tm_min, tm_registo.tm_sec);
+		
+		if( QUEST_TIME > difftime(t_entrega, mktime(&tm_registo))){
+			/* calcula pontuacao */
 			tcp_read(respostas,10);
 			score = verifica_score(respostas); 
 			printf("$$$$$$$$$$$$$$$$$$$$$ O score foi : %d\n\n", score);
@@ -439,15 +472,13 @@ void tcp_trata_mensagem(){
 		
 		/*responde ao User: AQS QID SCORE\n */
 		tcp_write("AQS ", 4);
-		tcp_write(s_QID,5);
-		printf("##### o QID : %s\n\n", s_QID);
+		tcp_write(s_QID,QID_SIZE);
 		tcp_write(" ", 1);
 		if( score != 101 ){
 			sprintf(s_score, "%d", score);
 			tcp_write(s_score, strlen(s_score));
 			tcp_write("\n", 1);
-			printf("##### o QID : %s\n\n", s_QID);
-			informa_ECP(&s_stud_ID[0], &s_QID[0], &s_score[0]); /* informa o ECP*/
+			informa_ECP(&s_stud_ID[0], &s_QID[0], &s_score[0]);/*informa o ECP*/
 		}
 		else{
 			strcpy(s_score, "-1");
@@ -461,18 +492,6 @@ void tcp_trata_mensagem(){
 	return;
 }
 
-
-void tcp_TES(){
-	tcp_set_socket();
-	while(1){
-		tcp_accept_connection();
-
-		tcp_trata_mensagem();
-	
-		tcp_close_connection();
-	}
-	tcp_close_socket();
-}
 
 void trata_arg_cmb(int n_args, char **argv){
 	if(n_args == 1){
@@ -525,14 +544,16 @@ void trata_arg_cmb(int n_args, char **argv){
 }
 
 int main(int argc, char **argv){
-	int ppid;
 	if(argc < 3 || 
 		!strcmp(argv[1], "-p") || !strcmp(argv[1], "-n") || !strcmp(argv[1], "-e") ){
 		printf("Introduza o Topic_Number e Topic_name.\nConsulte os ficheiros TES_parametros.png e readme.txt\n");
 		exit(1);
 	}
 	Tnn = atoi(argv[1]);
-	Tname = (char*)malloc(strlen(argv[2]) * sizeof(char));
+	Tname_size = strlen(argv[2]);
+	printf("O tname size: %d\n", Tname_size);
+	Tname = (char*)malloc((Tname_size + 1) * sizeof(char));
+	limpa_buffer(Tname, Tname_size + 1);
 	strcpy(Tname,argv[2]);
 	switch(argc){
 		case 3 : strcpy(ECPname, "localhost");
@@ -548,18 +569,16 @@ int main(int argc, char **argv){
 		default:printf("Erro no número de argumentos");
 	}
 	printf("Tnn: %d\t Tname: %s\t TESport: %d\t ECPname: %s\t ECPport: %d\n", Tnn, Tname, TESport, ECPname, ECPport);
-	ppid = fork();
-	if (ppid < 0){
-		printf("Erro a fazer o fork para SSs\n");
-		exit(1);
-		}
-	else if (ppid == 0){
-		/*filho udp*/
-		/*udp_TES();*/
+		
+	tcp_set_socket();
+	while(1){
+		tcp_accept_connection();
+
+		tcp_trata_mensagem();
+	
+		tcp_close_connection();
 	}
-	else{
-		/*pai tcp*/
-		tcp_TES();
-	}
+	tcp_close_socket();
+	
 	return 0;
 }

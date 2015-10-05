@@ -336,7 +336,7 @@ void tcp_RQT(){
 		tcp_read(caixote, 1); /* le '\n' */
 		
 	}
-	else printf("houve merda\n");
+	else printf("houve merda\n"); /*ERR ou EOF*/
 
 	tcp_close(fd2);
 	/*printf("Questionario %d.pdf recebido.\nTem ate %s para responder.\n", questID, deadline);*/
@@ -401,7 +401,7 @@ void tcp_submit(char* input){
 			printf("Obteve %d%% de pontuacao no questionario %s.\n", score, s_quest_ID);
 		}
 	}
-	else printf("houve shite no submit\n");
+	else printf("houve shite no submit\n"); /*ERR ou EOF*/
 	
 	tcp_close(fd2);
 	return;

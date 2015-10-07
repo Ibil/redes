@@ -46,8 +46,6 @@ int conta_digitos_int(int numero){
 
 int udp_open(int fd){
 	fd = socket(AF_INET, SOCK_DGRAM,0);
-	
-	/* meter "localhost" para testes*/
 	hostptr=gethostbyname(ECSname);
 	
 	memset((void*)&serveraddr, (int)'\0', sizeof(serveraddr));
@@ -58,16 +56,12 @@ int udp_open(int fd){
 }
 
 void udp_send(int nbytestosend, char* mensagem){
-	printf("VOu enviar a mensagem: %s", mensagem);
 	sendto(fd,mensagem, nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
-	printf("Mensagem enviada\n");
 	return;
 }
 
 void udp_receive(int nbytestoread){
-	printf("Pronto a receber\n");
 	recvfrom(fd, buffer_tn, nbytestoread*sizeof(char),0, (struct sockaddr*) &serveraddr, &addrlen);
-	printf("Recebi resposta: %s", buffer_tn);
 	return;
 }
 
@@ -77,24 +71,16 @@ void udp_close(int fd){
 }
 
 int tcp_connect(int fd_param){
-	printf("ENtrei no connect\n");
 	fd_param = socket(AF_INET,SOCK_STREAM,0);
-	printf("fiz socket\n");
 	fflush(stdout);
-	/*printf("ip_tes: %s", ip_tes);*/
-	printf("antes do gethost\n");
 	hostptr2 = gethostbyname(ip_tes);
-	
-	printf("fiz gethost\n");
 	
 	memset((void*)&serveraddr2, (int)'\0',sizeof(serveraddr2));
 	serveraddr2.sin_family = AF_INET;
 	serveraddr2.sin_addr.s_addr = ((struct in_addr *)(hostptr2->h_addr_list[0]))->s_addr;
-	printf("atoi(port_tes): %d\n", atoi(port_tes));
 	serveraddr2.sin_port = htons((short int)atoi(port_tes));
 
 	connect(fd_param,(struct sockaddr*)&serveraddr2,sizeof(serveraddr2));
-   printf("connect aceite\n");
    return fd_param;
 }
 
@@ -102,25 +88,21 @@ void tcp_write(char* msg, int nbytestowrite){
 	char *ptr;
 	ptr = msg;   
 	nleft=nbytestowrite;
-   printf("vou enviar mensagem: %s\n", ptr);
 	while(nleft > 0)	{
 		if( (nwritten=write(fd,ptr,nleft)) == -1){
-			printf("erro no write\n");
+			printf("Erro no write.\n");
 			exit(1);
 		}
 		nleft-=nwritten;
 		ptr+=nwritten;
 	}
-	printf("Mensagem Enviada\n");
 	return;
 }
 
 void tcp_read(char *msg, int nbytestoread){
 	char *ptr;
 	nleft=nbytestoread;
-	/* vou escrever por cima que nao faz mal neste exemplo*/
 	ptr=msg;
-	printf("Vou ler a resposta\n");
 	while(nleft>0){
 		if((nread = read(fd,ptr,nleft)) == -1){
 			printf("Erro a ler a resposta\n");
@@ -129,15 +111,11 @@ void tcp_read(char *msg, int nbytestoread){
 		nleft-=nread;
 		ptr+=nread;
 	}
-	puts("sair do read");
-	printf("A resposta lida foi : %s\n", msg);
 	return;
 }
 
 void tcp_read_alt(char *msg){
 	char *ptr_temp;
-	
-	printf("Vou ler a mensagem\n");
 	ptr_temp=&msg[0];
 	
 	
@@ -146,20 +124,15 @@ void tcp_read_alt(char *msg){
 			printf("Erro a ler a mensagem\n");
 			exit(1);
 		}
-		printf("O char : %c\n", (*ptr_temp));
 		ptr_temp+=nread;
 	}
 	while( (*(ptr_temp-1))!=' ' );
 	*(ptr_temp-1)=0;
-	puts("sair do read alt");
-	printf("A resposta lida foi: %s\n", msg);
 	return;
 }
 
-void tcp_read_alt_n(char *msg){		/*=================ISTO E MUITO FEIO===============*/
+void tcp_read_alt_n(char *msg){		/**/
 	char *ptr_temp;
-	
-	printf("Vou ler a mensagem\n");
 	ptr_temp=&msg[0];
 	
 	
@@ -168,12 +141,9 @@ void tcp_read_alt_n(char *msg){		/*=================ISTO E MUITO FEIO===========
 			printf("Erro a ler a mensagem\n");
 			exit(1);
 		}
-		printf("O char : %c\n", (*ptr_temp));
 		ptr_temp+=nread;
 	}
 	while( (*(ptr_temp-1))!='\n' );
-	puts("sair do read alt");
-	printf("A resposta lida foi: %s\n", msg);
 	return;
 }
 
@@ -282,10 +252,6 @@ void udp_request(char* input){
 	ptr = strtok(NULL, " ");
 	port_tes = (char*)malloc( strlen(ptr) * sizeof(char) );
 	strcpy(port_tes,ptr);
-
-	/*printf("Recebi mensagem AWTES: %s\n", buffer_tn);*/
-
-	printf("Ip:\t %s Port:\t %s", ip_tes, port_tes);
 	
 	
 	free (buffer_tn);
@@ -322,34 +288,25 @@ void tcp_RQT(){
 	sprintf(tes_rqt, "RQT %d\n", SID);
 	tcp_write(tes_rqt, 10);
 
-	printf("VOu ler o AQT\n\n");
+
 	/* Le o <AQT QID TIME SIZE DATA\N> */
 	tcp_read(tes_aqt, 4);
 	if( !strcmp("AQT ", tes_aqt)){
-		
-		printf("ESta mal!! QID pode ser 1 ou 10 ou 100. nao necessariamente 5 digitos!!\n");
 		tcp_read_alt(s_quest_ID);	/* Le o QID e grava */
-		/*questID = atoi(s_quest_ID);*/ /*ESTA MAL*/
-		printf("o QID : %s\n", s_quest_ID);
 		tcp_read(deadline, 18);		/*Le o time */
 		puts(deadline);
-		tcp_read(caixote, 1);	/* le ' ' */
+		tcp_read(caixote, 1);		/* le ' ' */
 		tcp_read_alt(s_file_size);	/*Le o tamanho do ficheiro*/
 		file_size = atoi(s_file_size);
-		printf("O tamanho : %ld\n", file_size);
-		
-		/*limpa_buffer(s_quest_ID, 25);*/
 		
 		data = (char*)malloc(file_size*sizeof(char));
 		tcp_read(data, file_size);
-		/*sprintf(s_quest_ID, "%d", questID);*/
 		sprintf(file_name, "%s.pdf", s_quest_ID);
 		f = fopen(file_name, "w");
 		if(f==NULL){
-			printf("Error opening file!\n");
+			printf("Error opening file.\n");
 			exit(1);
 		}
-		/*fprintf(f, "%s", data);*/
 		fwrite(data, sizeof(char), file_size, f);
 		fclose(f);
 				
@@ -365,8 +322,7 @@ void tcp_RQT(){
 	} 
 
 	tcp_close(fd2);
-	/*printf("Questionario %d.pdf recebido.\nTem ate %s para responder.\n", questID, deadline);*/
-	printf("received file %s.pdf\n", s_quest_ID);
+	printf("Received file %s.pdf\n", s_quest_ID);
 }
 
 void tcp_submit(char* input){
@@ -394,10 +350,7 @@ void tcp_submit(char* input){
 	}
 	answers[9] = '\n';
 
-	printf("%s\n", answers);
-
 	sprintf(rqs_msg, "RQS %d %s %s", SID, s_quest_ID, answers);
-	printf("Mensagem a ser enviada: %s\n", rqs_msg);
 
 	qid_len = strlen(s_quest_ID);
 	sprintf(s_SID, "%d", SID);

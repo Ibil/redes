@@ -43,23 +43,19 @@ int udp_open_socket(int fd){
 	serveraddr.sin_port=htons((int)ECSport);
 	
 	if (bind(fd,(struct sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
-		printf("Erro no bind : \n");
+		printf("Erro no bind.\n");
 		exit(1);
 	}
 	return fd;
 }
 
 void udp_receive(int nbytestoreceive){
-	printf("Pronto a receber\n");
 	recvfrom(fd, udp_buffer, nbytestoreceive*sizeof(char),0, (struct sockaddr*) &clientaddr, &addrlen);
-	printf("Mensagem recebida: %s\n", udp_buffer);
 	return;
 }
 
 void udp_send(int nbytestosend){
-	printf("VOu enviar resposta: %s\n", udp_buffer);
 	sendto(fd,udp_buffer, nbytestosend*sizeof(char), 0, (struct sockaddr*)&clientaddr, addrlen);
-	printf("Resposta enviada \n");
 	return;
 }
 
@@ -151,14 +147,13 @@ void copia_TES(){
 	
 	/*
 	input: "TER Tn\n\0"
-	outpu: "AWTES ip port\n\0"
+	output: "AWTES ip port\n\0"
 	*/
 	
 	/* Guardo o Topic_number*/
 	if((udp_buffer[4] >='0' && udp_buffer[4]<='9') 
 		&& udp_buffer[5] == '\n'){ /* ve se a mensagem acaba apos o primeiro digito*/
 			topic_index = udp_buffer[4] - '0';
-			printf("FU %d\n", max_top);
 	}
 	else{
 		if(udp_buffer[5] >='0' && udp_buffer[5]<='9'){ /* Ve se o segundo digito e um numero */
@@ -169,7 +164,6 @@ void copia_TES(){
 			return;
 		}	
 	}
-	printf("Tentar %d %d\n", topic_index, max_top);
 	if((topic_index>max_top) || (topic_index < 1)){ 
 		strcpy(udp_buffer,"EOF\n\0");
 		return;
@@ -209,7 +203,6 @@ void copia_TES(){
 	udp_buffer[buffer_index] = '\n';
 	udp_buffer[buffer_index+1] = '\0';
 	
-	printf("O udp_buffer com %d size, awtes : %s", strlen(udp_buffer),udp_buffer);
 	fclose(fp_txt);
 	return;
 }
@@ -238,9 +231,12 @@ void receive_Stats(){
 	limpa_buffer(udp_buffer, 250);
 	strcpy(udp_buffer, awi);
 
-	sprintf(stat, "%s %s %s %d\n", s_ID, q_ID, topic_name, score);
-	fp_stats = fopen("stats.txt", "w");
-	fwrite(stat, sizeof(char), strlen(stat), fp_stats);
+	sprintf(stat, "SID: %s QID: %s Topic Name: %s Score: %d\n", s_ID, q_ID, topic_name, score);
+	fp_stats = fopen("stats.txt", "r+");
+	fseek(fp_stats, 0, SEEK_END);
+	/*fwrite(stat, sizeof(char), strlen(stat), fp_stats);*/
+	fprintf(fp_stats, "%s", stat);
+	fclose(fp_stats);
 }
 
 void udp_trata_mensagem(){
@@ -250,7 +246,6 @@ void udp_trata_mensagem(){
 		udp_buffer[2] == 'R' &&
 		udp_buffer[3] == ' ')
 	{
-		printf("Mensagem entrou no ter\n");
 		copia_TES();
 		return;
 	}
@@ -289,7 +284,6 @@ int main(int argc, char **argv){
 		addrlen = sizeof(clientaddr);
 	
 		udp_receive(250);
-		printf("%s", udp_buffer);
 		udp_trata_mensagem();
 		udp_send(strlen(udp_buffer));
 	

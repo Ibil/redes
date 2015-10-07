@@ -17,6 +17,8 @@ while(palavra != NULL);
 
  ############# fim parte resposta##########
  
+ struct hostent *h;
+ 
  /*printf a deixar :: de onde veio o pedido*/
 h=gethostbyaddr((char*)&clientaddr.sin_addr,sizeof(struct in_addr),AF_INET);
 if(h==NULL){

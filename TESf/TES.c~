@@ -192,7 +192,10 @@ char* verifica_respostas(char* vec_respostas){
 	FILE *fp_txt;
 	char filename[20];
 	
+	
 	limpa_buffer(filename, 20);
+	
+	
 	
 	sprintf(filename, "%dQF%dA.txt", Tnn, q_index);
 	fp_txt = fopen(filename, "r");
@@ -244,7 +247,7 @@ long int get_file_size(){
 	char filename[20];
 	
 	limpa_buffer(filename, 20);
-	sprintf(filename, "%dQF%d.pdf", Tnn, q_index);
+	sprintf(filename, "%dQF1.pdf", Tnn);
 	fp_pdf = fopen(filename, "r+");
 	fseek(fp_pdf, 0,SEEK_END);
 	new_pos = ftell(fp_pdf);
@@ -259,7 +262,7 @@ char* get_dados(char* dados, int file_size){
 	
 	limpa_buffer(filename, 20);
 	
-	sprintf(filename, "%dQF%d.pdf", Tnn, q_index);
+	sprintf(filename, "%dQF1.pdf", Tnn);
 	fp_pdf = fopen(filename, "r+");
 	fread(dados,sizeof(char),file_size, fp_pdf);
 	fclose(fp_pdf);

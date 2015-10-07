@@ -55,16 +55,12 @@ int udp_open(int udp_fd){
 }
 
 void udp_receive(char* buffer, int nbytestoread){
-	printf("Pronto a receber\n");
 	recvfrom(udp_fd, buffer, nbytestoread*sizeof(char),0, (struct sockaddr*) &udp_serveraddr, &udp_addrlen);
-	printf("Recebi resposta: %s", buffer);
 	return;
 }
 
 void udp_send(char* mensagem, int nbytestosend){
-	printf("VOu enviar a mensagem: %s", mensagem);
 	sendto(udp_fd,mensagem, nbytestosend*sizeof(char), 0, (struct sockaddr*)&udp_serveraddr, udp_addrlen);
-	printf("Mensagem enviada\n");
 	return;
 }
 
@@ -97,13 +93,11 @@ void tcp_accept_connection(){
 		printf("Erro no listen : \n");
 		exit(1);
 	}
-	printf("Estou a escuta!\n");
 	clientlen = sizeof(clientaddr);
 	if((tcp_connection_fd = accept(tcp_socket_fd,(struct sockaddr*)&clientaddr,&clientlen)) == -1){
 		printf("Erro no accept\n");
 		exit(1);
 	}
-	printf("Aceitei a ligacao\n");
 	return;
 }
 
@@ -111,9 +105,7 @@ void tcp_accept_connection(){
 void tcp_read(char *buffer, int nbytestoread){
 	char *ptr;
 	nleft=nbytestoread;
-	/* vou escrever por cima que nao faz mal neste exemplo*/
 	ptr=buffer;
-	printf("Vou ler a resposta\n");
 	while(nleft>0){
 		if((nread = read(tcp_connection_fd,ptr,nleft)) == -1){
 			printf("Erro a ler a resposta\n");
@@ -122,36 +114,29 @@ void tcp_read(char *buffer, int nbytestoread){
 		nleft-=nread;
 		ptr+=nread;
 	}
-	printf("A resposta lida foi : %s\n", buffer);
 	return;
 }
+
+/* O read alt esta pensado de forma a ler do socket ate um caracter especifico e remove-lo de msg */
 
 void tcp_read_alt(char *msg){
 	char *ptr_temp;
 	
-	printf("Vou ler a mensagem\n");
 	ptr_temp=&msg[0];
-	
-	
 	do{
 		if((nread = read(tcp_connection_fd,ptr_temp,1)) == -1){
 			printf("Erro a ler a mensagem\n");
 			exit(1);
 		}
-		printf("O char : %c\n", (*ptr_temp));
 		ptr_temp+=nread;
 	}
 	while( (*(ptr_temp-1))!=' ' );
 	*(ptr_temp-1)=0;
-	
-	puts("sair do read alt");
-	printf("A resposta lida foi: %s\n", msg);
 	return;
 }
 
 void tcp_write(char* buffer, int nbytestowrite){
 	char *ptr;
-	printf("vou enviar a resposta: %s\n", buffer);
 	ptr = buffer;
 	nleft = nbytestowrite;
 	while(nleft > 0){
@@ -162,7 +147,6 @@ void tcp_write(char* buffer, int nbytestowrite){
 	nleft-=nwritten;
 	ptr+=nwritten;
 	}
-	printf("Resposta enviada\n");
 	return;
 }
 
@@ -192,10 +176,7 @@ char* verifica_respostas(char* vec_respostas){
 	FILE *fp_txt;
 	char filename[20];
 	
-	
 	limpa_buffer(filename, 20);
-	
-	
 	
 	sprintf(filename, "%dQF%dA.txt", Tnn, q_index);
 	fp_txt = fopen(filename, "r");
@@ -247,7 +228,7 @@ long int get_file_size(){
 	char filename[20];
 	
 	limpa_buffer(filename, 20);
-	sprintf(filename, "%dQF1.pdf", Tnn);
+	sprintf(filename, "%dQF%d.pdf", Tnn, q_index);
 	fp_pdf = fopen(filename, "r+");
 	fseek(fp_pdf, 0,SEEK_END);
 	new_pos = ftell(fp_pdf);
@@ -262,7 +243,7 @@ char* get_dados(char* dados, int file_size){
 	
 	limpa_buffer(filename, 20);
 	
-	sprintf(filename, "%dQF1.pdf", Tnn);
+	sprintf(filename, "%dQF%d.pdf", Tnn, q_index);
 	fp_pdf = fopen(filename, "r+");
 	fread(dados,sizeof(char),file_size, fp_pdf);
 	fclose(fp_pdf);
@@ -275,18 +256,13 @@ void informa_ECP(char* SID, char* QID, char* score){
 	char resposta[tamanho];
 	
 	limpa_buffer(resposta,tamanho);
-	
-	printf("o TName tem size: %d ; %d e tem la : %s\n",strlen(Tname), Tname_size, Tname);
-	
-	printf("%s %s %s %s\n", SID, QID, Tname, score);
-	
+		
 	lixo =(char*)malloc( (strlen(QID) + 5) * sizeof(char));
 
 	udp_fd = udp_open(udp_fd);
 	udp_addrlen = sizeof(udp_serveraddr);
 	
 	sprintf(resposta, "IQR %s %s %s %s\n", SID, QID, Tname, score);
-	printf("A comunicacao com o ECP: %s\n", resposta);
 	udp_send(resposta, tamanho);
 	udp_receive(lixo, strlen(lixo));
 	
@@ -328,15 +304,13 @@ void tcp_envia_AQT(char* s_SID, char* s_QID){
 	tcp_write(" ", 1);
 	
 	/* define que questionario atribuir a um pedido*/
-	q_index = (atoi(s_QID)%q_number) + 1;
+	q_index = ( (s_QID[22]*10 + s_QID[23])%q_number ) + 1;
 	
 	tcp_write(aqt_time, 18);
 	tcp_write(" ", 1);
 	
 	file_size = get_file_size();
-	printf("ola\n");
 	n_digitos = conta_digitos_long_int(file_size);
-	printf("ola\n");
 	s_size_of_data = (char*)malloc(n_digitos * sizeof(char));
 	sprintf(s_size_of_data, "%ld", file_size);
 	tcp_write( s_size_of_data, n_digitos);
@@ -380,9 +354,7 @@ void tcp_trata_mensagem(){
 	limpa_buffer(s_QID, QID_SIZE + 1);
 	
 	tcp_read(tcp_input_buffer, 4);
-	printf("buffer: %s\n", tcp_input_buffer);
 	if( !strcmp("RQT ", tcp_input_buffer)){
-		printf("Li o RQT' '\n");
 		/* 	
 		-(INPUT)->  RQT SID\n  
 		<-(OUTPUT)- AQT QID time size data\n 
@@ -410,14 +382,14 @@ void tcp_trata_mensagem(){
 		-(INPUT)->  RQS SID V1 V2 V3 V4 V5\n
 		<-(OUTPUT)- AQS QID score\n	
 		*/
-		printf("LI o RQS' '\n");
 		
 		tcp_read(s_stud_ID, 5); /* Le o SID*/
 		tcp_read(tcp_input_buffer, 1);
 		tcp_read_alt(s_QID);	/* LE o QID*/
 		
 		/* Obtem qual o numero do conjunto de respostas que corresponde a este pedido*/
-		q_index = (atoi(s_QID)%q_number) + 1;
+		q_index = ( (s_QID[22]*10 + s_QID[23])%q_number ) + 1;
+		printf("O q_index para ler respostas : %d\n", q_index);
 		
 		/* COpia o tempo de registo ------------------------------------------------------------------------*/
 		
@@ -461,10 +433,8 @@ void tcp_trata_mensagem(){
    		*/
 		
 		if( QUEST_TIME > difftime(t_entrega, mktime(&tm_registo))){
-			/* calcula pontuacao */
 			tcp_read(respostas,10);
 			score = verifica_score(respostas); 
-			printf("$$$$$$$$$$$$$$$$$$$$$ O score foi : %d\n\n", score);
 		}
 		else{
 			score = 101; /* isto == -1;*/
@@ -560,23 +530,19 @@ int main(int argc, char **argv){
 	limpa_buffer(Tname, Tname_size + 1);
 	strcpy(Tname,argv[2]);
 	q_number = atoi(argv[3]);
-	printf(" o q_number : %d\n", q_number);
 	switch(argc){
 		case 4 : strcpy(ECPname, "localhost");
-			 break;
+			 	 break;
 		case 6 : trata_arg_cmb(1,argv);
-		         break;
+	         	 break;
 		case 8 : trata_arg_cmb(2,argv);
-			 break;
+			 	 break;
 		case 10 : TESport = atoi(argv[5]);
-			 strcpy(ECPname, argv[7]);
-			 ECPport = atoi(argv[9]);
-			 break;
+			 	  strcpy(ECPname, argv[7]);
+			 	  ECPport = atoi(argv[9]);
+			 	  break;
 		default:printf("Erro no número de argumentos");
 	}
-	
-	printf("Tnn: %d\t Tname: %s\t TESport: %d\t ECPname: %s\t ECPport: %d\n", Tnn, Tname, TESport, ECPname, ECPport);
-	
 		
 	tcp_set_socket();
 	while(1){

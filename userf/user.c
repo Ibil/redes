@@ -24,6 +24,7 @@ struct hostent *hostptr2;
 struct sockaddr_in serveraddr;
 struct sockaddr_in serveraddr2;
 int addrlen, addrlen2, nleft, nwritten, nread;
+int err = 0;
 
 extern int errno;
 /* 192.168.128.1 */
@@ -204,10 +205,24 @@ int udp_list(){
 
 	udp_close(fd);
 	
+	palavra = strtok(buffer_tn, "\n");
+
+	if(!strcmp(palavra, "EOF")){
+		printf("Nao ha questionarios disponiveis.\n");
+		exit(1);
+	}
+	else{
+		if(!strcmp(palavra, "ERR")){
+			printf("Pedido mal formulado.\n");
+			return 0;
+		}
+	}
+
 	palavra = strtok(buffer_tn, " ");
 	palavra = strtok(NULL, " ");
 
-	contador = 1;	
+	
+	contador = 1;
 	
 	for(n_top=atoi(palavra); n_top>0; n_top--,contador++){
 		palavra = strtok(NULL, " ");
@@ -217,6 +232,7 @@ int udp_list(){
 	free (buffer_tn);
 	return 0;
 }
+
 
 void udp_request(char* input){
 	int Tn;
@@ -251,8 +267,14 @@ void udp_request(char* input){
 	limpa_buffer(buffer_tn, MAXBUFFSIZE);
 	udp_receive(MAXBUFFSIZE);
 
-	strtok(buffer_tn, " ");
+	strtok(buffer_tn, "\n");
+	if(!strcmp("EOF", buffer_tn)){
+		err = 1;
+		printf("Numero de topico invalido, tente de novo.\n");
+		return;
+	}
 	
+	strtok(buffer_tn, " ");
 	ptr = strtok(NULL, " ");
 	ip_tes = (char*)malloc( strlen(ptr) * sizeof(char) );
 	strcpy(ip_tes,ptr);
@@ -296,7 +318,7 @@ void tcp_RQT(){
 	
 	fd2 = tcp_connect(fd2);
 
-	/* evia <RQT SID\n> */
+	/* envia <RQT SID\n> */
 	sprintf(tes_rqt, "RQT %d\n", SID);
 	tcp_write(tes_rqt, 10);
 
@@ -336,7 +358,11 @@ void tcp_RQT(){
 		tcp_read(caixote, 1); /* le '\n' */
 		
 	}
-	else printf("houve merda\n"); /*ERR ou EOF*/
+	else{	/*ERR*/
+		if(!strcmp("ERR\n", tes_aqt)){
+			printf("Pedido mal formulado.\n");
+		}
+	} 
 
 	tcp_close(fd2);
 	/*printf("Questionario %d.pdf recebido.\nTem ate %s para responder.\n", questID, deadline);*/
@@ -401,8 +427,10 @@ void tcp_submit(char* input){
 			printf("Obteve %d%% de pontuacao no questionario %s.\n", score, s_quest_ID);
 		}
 	}
-	else printf("houve shite no submit\n"); /*ERR ou EOF*/
-	
+	else{  /*ERR*/
+		printf("Pedido mal formulado, tente de novo.\n");
+	}
+
 	tcp_close(fd2);
 	return;
 }
@@ -447,17 +475,23 @@ int main(int argc, char **argv){
 		scanf("%s", terminal_input);
 		if(!strcmp(terminal_input, "list")){
 			udp_list();
+			continue;
 		}
 		if(!strcmp(terminal_input, "request")){
 			udp_request(terminal_input);
+			if(err == 1)
+				continue;
 			tcp_RQT();
+			continue;
 		}
 		if(!strcmp(terminal_input, "submit")){
 			tcp_submit(terminal_input);
+			continue;
 		}
 		if(!strcmp(terminal_input, "exit")){
 			break;
 		}
+		printf("Pedido mal formulado, tente de novo.\n");
 	}
 	return 0;
 }

@@ -75,7 +75,7 @@ void copia_Tnames(){
 	char TES_name[25];
 	char TES_ip[15];
 	char TES_port[6];
-	int indice_buffer;
+	int indice_buffer = 0;
 	int name_size;
 	int i;
 	
@@ -89,35 +89,7 @@ void copia_Tnames(){
 		
 	t_number--; /* pois o for incrementa antes de sair*/
 	
-	if(t_number < 10){
-		udp_buffer[4] =  t_number + '0';
-		indice_buffer = 5;
-	}
-	else{
-		udp_buffer[4] =  t_number/10 + '0';
-		udp_buffer[5] =  t_number%10 + '0';
-		indice_buffer = 6;
-	}
-	
-	fseek(fp_txt, 0,SEEK_SET);
-
-	/* vai passar as linhas para o buffer uma a uma*/
-	for(t_number = 1;
-		1 < fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
-		t_number++){
-		
-		name_size = strlen(TES_name);
-		
-		/* poe o nome*/
-		udp_buffer[indice_buffer]= ' ';
-		indice_buffer++;
-		for( i = 0; i < name_size; i++){
-			udp_buffer[indice_buffer+i]= TES_name[i];
-		}
-		indice_buffer += name_size;
-	} 
-	
-	if(t_number == 1){
+	if(t_number == 0){
 		udp_buffer[indice_buffer] = 'E';	
 		indice_buffer++;
 
@@ -127,6 +99,38 @@ void copia_Tnames(){
 		udp_buffer[indice_buffer] = 'F';	
 		indice_buffer++;	
 
+	}
+	else{ 
+		strcpy(udp_buffer,"AWT ");
+		if(t_number < 10){
+			udp_buffer[4] =  t_number + '0';
+			indice_buffer = 5;
+		}
+		else{
+			udp_buffer[4] =  t_number/10 + '0';
+			udp_buffer[5] =  t_number%10 + '0';
+			indice_buffer = 6;
+		}
+	
+		fseek(fp_txt, 0,SEEK_SET);
+
+	
+		/* vai passar as linhas para o buffer uma a uma*/
+		for(t_number = 1;
+			1 < fscanf(fp_txt,"%s %s %s",TES_name, TES_ip, TES_port);
+			t_number++){
+		
+			name_size = strlen(TES_name);
+			
+			/* poe o nome*/
+			udp_buffer[indice_buffer]= ' ';
+			indice_buffer++;
+			for( i = 0; i < name_size; i++){
+				udp_buffer[indice_buffer+i]= TES_name[i];
+			}
+			indice_buffer += name_size;
+	    	} 
+	
 	}
 	udp_buffer[indice_buffer] = '\n';
 	udp_buffer[indice_buffer+1] = '\0';
@@ -216,61 +220,12 @@ void receive_Stats(){
 	char *topic_name;
 	char *s_score;
 	char awi[29];
+	char stat[250];
 	int i, j, score;
-	/*char car;*/
 	char *caixote;
+	FILE *fp_stats;
 
-	/*limpa_buffer(s_ID, 6);
-	limpa_buffer(q_ID, 24);
-	limpa_buffer(topic_name, 50);
-	limpa_buffer(awi, 29);*/
-	
-	/*printf("entrou no receive_stats\n");
-	for(i=0; i<5; i++){  /*TRATA SID
-		s_ID[i] = udp_buffer[4+i];
-	}
-	printf("SID: %s, strlen: %d\n", s_ID, strlen(s_ID));
-	i=i+5;		/*COMER O ESPACO E DESPREZAR O "IQR "
-	car = udp_buffer[i];
-	j = 0;
-	while(car != ' '){ /*TRATA QID
-		q_ID[j]=car;
-		printf("car: %c\n", car);
-		i++;
-		j++;
-		printf("udp_buffer[%d]: %c\n", i, udp_buffer[i]);
-		car = udp_buffer[i];
-	}
-	i++;
-
-	printf("QID: %s\n", q_ID);
-
-	car = udp_buffer[i];
-	j=0;
-	while(car != ' '){ /*TRATA topic_name
-		topic_name[j]=car;
-		i++;
-		j++;
-		car = udp_buffer[i];
-	}
-	i++;
-
-	printf("topic_name: %s\n", topic_name);
-
-	car = udp_buffer[i];
-	j=0;
-	while(car != '\n'){ /*TRATA score
-		s_score[j]=car;
-		i++;
-		j++;
-		car = udp_buffer[i];
-	}
-	score = atoi(s_score);
-
-	printf("score: %d\n", score);
-	/*FALTA POR A INFORMACAO EM ALGUM SITIO, POR ENQUANTO VOU IMPRIMIR
-	printf("strlen:%d, s_ID: %s\n", strlen(s_ID), s_ID);
-	s_ID[5]='\0';*/
+	limpa_buffer(stat, 250);
 	caixote = strtok(udp_buffer, " ");
 	s_ID = strtok(NULL, " ");
 	q_ID = strtok(NULL, " ");
@@ -282,6 +237,10 @@ void receive_Stats(){
 	sprintf(awi, "AWI %s\n", q_ID);
 	limpa_buffer(udp_buffer, 250);
 	strcpy(udp_buffer, awi);
+
+	sprintf(stat, "%s %s %s %d\n", s_ID, q_ID, topic_name, score);
+	fp_stats = fopen("stats.txt", "w");
+	fwrite(stat, sizeof(char), strlen(stat), fp_stats);
 }
 
 void udp_trata_mensagem(){
@@ -297,8 +256,8 @@ void udp_trata_mensagem(){
 	}
 	/*TRATA DO TQR*/	
 	if(!strcmp(udp_buffer,"TQR\n")){
-		strcpy(udp_buffer,"AWT ");
 		copia_Tnames();
+		return;
 	}
 	/*TRATA DO IQR SID QID topic_name score*/
 	if(udp_buffer[0] == 'I' &&
@@ -306,11 +265,9 @@ void udp_trata_mensagem(){
 	   udp_buffer[2] == 'R' &&
 	   udp_buffer[3] == ' '){
 		receive_Stats();
+		return;
 	}
-	/*else{
-		strcpy(udp_buffer, "ERR\n\0");
-	}*/
-	
+	strcpy(udp_buffer, "ERR\n\0");	
 	return;
 }
 

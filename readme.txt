@@ -2,7 +2,7 @@ User: Para definir porta do ECP : -n ip -p porta
 
 ECP: -p porta
 		topics.txt tem os Tnn, ips e portas dos TES
-		stats.txt : por fazer
+		stats.txt : deve estar criado pelo menos quando o ECP for iniciado
 		
 		
 TES: Tnn Topic_name q_number -p TESport -n ECPname -e ECPport

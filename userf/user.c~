@@ -441,6 +441,7 @@ int main(int argc, char **argv){
 			continue;
 		}
 		if(!strcmp(terminal_input, "submit")){
+			printf("Entrei no submit da main\n");
 			tcp_submit(terminal_input);
 			continue;
 		}

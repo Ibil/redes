@@ -36,7 +36,7 @@ char *tes_rqt;
 #define MAXBUFFSIZE 2580
 
 
-int conta_digitos_int(int numero){
+int conta_digitos_int(int numero){ /*Conta o numero de digitos de um numero*/
 	int n_digitos;
 	for( n_digitos = 1; numero > 10; n_digitos++){
 		numero = numero/10;
@@ -44,7 +44,7 @@ int conta_digitos_int(int numero){
 	return n_digitos;
 }
 
-int udp_open(int fd){
+int udp_open(int fd){ /*Funcao que trata de abrir uma ligacao UDP*/
 	fd = socket(AF_INET, SOCK_DGRAM,0);
 	hostptr=gethostbyname(ECSname);
 	
@@ -55,22 +55,22 @@ int udp_open(int fd){
 	return fd;
 }
 
-void udp_send(int nbytestosend, char* mensagem){
+void udp_send(int nbytestosend, char* mensagem){ /*Funcao que envia uma mensagem em UDP*/
 	sendto(fd,mensagem, nbytestosend*sizeof(char), 0, (struct sockaddr*)&serveraddr, addrlen);
 	return;
 }
 
-void udp_receive(int nbytestoread){
+void udp_receive(int nbytestoread){ /*Funcao que recebe uma mensagem em UDP*/
 	recvfrom(fd, buffer_tn, nbytestoread*sizeof(char),0, (struct sockaddr*) &serveraddr, &addrlen);
 	return;
 }
 
-void udp_close(int fd){
+void udp_close(int fd){ /*Funcao que fecha uma ligacao UDP*/
 	close(fd);
 	return;
 }
 
-int tcp_connect(int fd_param){
+int tcp_connect(int fd_param){ /*Funcao que inicia uma ligacao TCP*/
 	fd_param = socket(AF_INET,SOCK_STREAM,0);
 	fflush(stdout);
 	hostptr2 = gethostbyname(ip_tes);
@@ -84,7 +84,7 @@ int tcp_connect(int fd_param){
    return fd_param;
 }
 
-void tcp_write(char* msg, int nbytestowrite){
+void tcp_write(char* msg, int nbytestowrite){ /*Funcao que envia uma mensagem por TCP*/
 	char *ptr;
 	ptr = msg;   
 	nleft=nbytestowrite;
@@ -99,7 +99,7 @@ void tcp_write(char* msg, int nbytestowrite){
 	return;
 }
 
-void tcp_read(char *msg, int nbytestoread){
+void tcp_read(char *msg, int nbytestoread){ /*Funcao que le uma mensagem com um tamanho fixo por TCP*/
 	char *ptr;
 	nleft=nbytestoread;
 	ptr=msg;
@@ -114,7 +114,7 @@ void tcp_read(char *msg, int nbytestoread){
 	return;
 }
 
-void tcp_read_alt(char *msg){
+void tcp_read_alt(char *msg){ /*Funcao que le uma mensagem ate ao caracter ' ' por TCP*/
 	char *ptr_temp;
 	ptr_temp=&msg[0];
 	
@@ -131,7 +131,7 @@ void tcp_read_alt(char *msg){
 	return;
 }
 
-void tcp_read_alt_n(char *msg){		/**/
+void tcp_read_alt_n(char *msg){		/*Funcao que le uma mensagem ate ao caracter '\n' por TCP*/
 	char *ptr_temp;
 	ptr_temp=&msg[0];
 	
@@ -147,12 +147,12 @@ void tcp_read_alt_n(char *msg){		/**/
 	return;
 }
 
-void tcp_close(int fd){
+void tcp_close(int fd){ /*Funcao que fecha uma ligacao TCP*/
 	close(fd);
 }
 
 
-void limpa_buffer(char* buffer, int tamanho){
+void limpa_buffer(char* buffer, int tamanho){ /*Funcao que limpa uma string*/
 	int i;
 	for(i=0;i<tamanho;i++){
 		buffer[i] = '\0';
@@ -160,7 +160,7 @@ void limpa_buffer(char* buffer, int tamanho){
 	return;
 }
 
-int udp_list(){
+int udp_list(){ /*Funcao que trata o pedido de "list" do utilizador*/
 
 	int contador, n_top;
 	char *palavra;
@@ -175,7 +175,7 @@ int udp_list(){
 
 	udp_close(fd);
 	
-	palavra = strtok(buffer_tn, "\n");
+	palavra = strtok(buffer_tn, "\n"); /*Verifica se a mensagem e EOF ou ERR*/
 
 	if(!strcmp(palavra, "EOF")){
 		printf("Nao ha questionarios disponiveis.\n");
@@ -196,7 +196,6 @@ int udp_list(){
 	
 	for(n_top=atoi(palavra); n_top>0; n_top--,contador++){
 		palavra = strtok(NULL, " ");
-		/* deixar printf */
 		printf("%d- %s\n",contador,palavra);
 	}
 	
@@ -205,7 +204,7 @@ int udp_list(){
 }
 
 
-void udp_request(char* input){
+void udp_request(char* input){ /*Funcao que trata da parte UDP do pedido de "request" do utilizador*/
 	int Tn;
 	char *msg;
 	char *ptr;
@@ -238,7 +237,7 @@ void udp_request(char* input){
 	limpa_buffer(buffer_tn, MAXBUFFSIZE);
 	udp_receive(MAXBUFFSIZE);
 
-	strtok(buffer_tn, "\n");
+	strtok(buffer_tn, "\n"); /*Verifica se a mensagem e EOF*/
 	if(!strcmp("EOF", buffer_tn)){
 		err = 1;
 		printf("Numero de topico invalido, tente de novo.\n");
@@ -261,13 +260,10 @@ void udp_request(char* input){
 	return;
 }
 
-void tcp_RQT(){
+void tcp_RQT(){ /*Funcao que trata da parte TCP do pedido de "request" do utilizador*/
 	char tes_rqt[255];
 	char tes_aqt[255];
-	
-	/*char s_quest_ID[25];*/
 	char deadline[19];
-	
 	char s_file_size[255];
 	long int file_size;
 	char *data;
@@ -325,7 +321,7 @@ void tcp_RQT(){
 	printf("Received file %s.pdf\n", s_quest_ID);
 }
 
-void tcp_submit(char* input){
+void tcp_submit(char* input){ /*Funcao que trata do pedido de "submit" do utilizador*/
 	char answers[11];
 	char answers_b[11];
 	char rqs_msg[255];
@@ -379,7 +375,6 @@ void tcp_submit(char* input){
 		}
 		else{
 			score = atoi(s_score);
-			/* Deixar printf */
 			printf("Obtained score: %d%%\n", score);
 		}
 	}
@@ -391,7 +386,7 @@ void tcp_submit(char* input){
 	return;
 }
 
-void trata_args(char* arg1, char* arg2){
+void trata_args(char* arg1, char* arg2){ /*Funcao que trata os argumentos com que o programa e chamado*/
 	if(!strcmp(arg1,"-n")){
 		strcpy(ECSname,arg2);
 		ECSport = DEFAULT_PORT;

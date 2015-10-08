@@ -1,3 +1,2 @@
 introduction localhost 59000
 app_socket_prog localhost 59000
-application localhost 59000

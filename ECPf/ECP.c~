@@ -259,7 +259,7 @@ void udp_trata_mensagem(){
 	if(!strcmp(udp_buffer,"TQR\n")){
 		/* DEixar o printf a seguir */
 		h=gethostbyaddr((char*)&clientaddr.sin_addr,sizeof(struct in_addr),AF_INET);
-		printf("List request: %s %hu\n", h->h_name ,ntohs(clientaddr.sin_port));
+		printf("List request: %s %d\n", h->h_name ,ntohs(clientaddr.sin_port));
 		copia_Tnames();
 		return;
 	}

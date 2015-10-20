@@ -51,7 +51,7 @@ int udp_open(int fd){ /*Funcao que trata de abrir uma ligacao UDP*/
 	memset((void*)&serveraddr, (int)'\0', sizeof(serveraddr));
 	serveraddr.sin_family=AF_INET;
 	serveraddr.sin_addr.s_addr=((struct in_addr*)(hostptr->h_addr_list[0]))->s_addr;
-	serveraddr.sin_port=htons((int)ECSport);
+	serveraddr.sin_port=htons(ECSport);
 	return fd;
 }
 

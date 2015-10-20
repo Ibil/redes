@@ -369,7 +369,7 @@ void tcp_trata_mensagem(){
 		
 		/* DEixar o printf a seguir */
 		h=gethostbyaddr((char*)&clientaddr.sin_addr,sizeof(struct in_addr),AF_INET);
-		printf("Request: %s %s %hu\n",s_stud_ID, h->h_name,ntohs(clientaddr.sin_port));
+		printf("Request: %s %s %d\n",s_stud_ID, h->h_name,TESport);
 		
 		
 		tcp_envia_AQT(&s_stud_ID[0], &s_QID[0]);
